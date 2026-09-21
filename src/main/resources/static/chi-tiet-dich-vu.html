@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Dịch vụ - HTX Lam Hồng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #f8f9fa; }
+        .service-detail-container { max-width: 900px; margin: 40px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .service-title { font-size: 2.2rem; color: var(--green-700, #0d5d42); font-weight: 700; margin-bottom: 15px; }
+        .service-price { font-size: 1.4rem; color: #dc3545; font-weight: 600; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .service-thumb { width: 100%; max-height: 450px; object-fit: contain; border-radius: 8px; margin-bottom: 30px; background: #f1f1f1; padding: 10px; }
+        .service-summary { font-size: 1.2rem; font-weight: 500; color: #444; margin-bottom: 20px; line-height: 1.6; }
+        .service-desc { font-size: 1.1rem; line-height: 1.8; color: #333; }
+        .back-link { display: inline-flex; align-items: center; margin-bottom: 25px; color: var(--green-700, #0d5d42); text-decoration: none; font-weight: 600; }
+        .back-link:hover { text-decoration: underline; }
+        .contact-box { background: #e9f5f0; border-left: 4px solid var(--green-700, #0d5d42); padding: 20px; border-radius: 0 8px 8px 0; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="index.html" class="brand" aria-label="Lam Hồng home">
+                <img src="static/logo.png" alt="Logo HTX Lam Hồng" class="brand-logo">
+                <span class="brand-copy">HTX VẬN TẢI LAM HỒNG</span>
+            </a>
+
+            <nav class="main-nav" id="mainNav">
+                <a href="index.html#trang-chu">Trang chủ</a>
+                <a href="index.html#gioi-thieu">Giới thiệu</a>
+                <a href="dich-vu.html" class="active">Dịch vụ</a>
+                <a href="tin-tuc.html">Tin tức</a>
+                <a href="index.html#xa-vien">Bảng giá</a>
+                <a href="index.html#lien-he">Liên hệ</a>
+            </nav>
+
+            <a href="tel:0833303777" class="header-btn"><span class="header-btn-icon">📞</span> 0833 303 777</a>
+            <button class="menu-toggle" id="menuToggle" aria-label="Mở menu">☰</button>
+        </div>
+    </header>
+
+    <div class="service-detail-container">
+        <a href="dich-vu.html" class="back-link">← Quay lại danh sách Dịch vụ</a>
+        <div id="detail-content">
+            <div style="text-align:center; padding: 50px;">Đang tải nội dung...</div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.getElementById('mainNav').classList.toggle('active');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if(!id) {
+                document.getElementById('detail-content').innerHTML = '<p style="color:red; text-align:center;">Không tìm thấy dịch vụ.</p>';
+                return;
+            }
+
+            fetch(API_BASE_URL + "/api/public/services?size=100")
+                .then(res => res.json())
+                .then(data => {
+                    const s = data.content.find(x => x.id == id);
+                    if(!s) {
+                        document.getElementById('detail-content').innerHTML = '<p style="color:red; text-align:center;">Dịch vụ không tồn tại hoặc đã bị xóa.</p>';
+                        return;
+                    }
+
+                    const formatPrice = (price) => {
+                        if(!price) return "Liên hệ";
+                        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+                    };
+
+                    let html = `
+                        <h1 class="service-title">${s.name}</h1>
+                        <div class="service-price">Giá: ${formatPrice(s.price)}</div>
+                        <img src="${s.imageUrl || 'static/logo.png'}" class="service-thumb" alt="${s.name}">
+                        
+                        <div class="service-summary">${s.summary || ''}</div>
+                    `;
+
+                    if (s.description && s.description.trim() !== '') {
+                        html += `<div class="service-desc">${s.description.replace(/\\n/g, '<br>')}</div>`;
+                    }
+
+                    html += `
+                        <div class="contact-box">
+                            <h4 style="color: #0d5d42; margin-bottom: 10px;">Cần tư vấn thêm về dịch vụ này?</h4>
+                            <p style="margin-bottom: 15px; color: #444;">Đội ngũ chuyên viên của HTX Vận Tải Lam Hồng luôn sẵn sàng hỗ trợ bạn 24/7.</p>
+                            <a href="tel:0833303777" class="btn btn-primary" style="font-weight: bold;">Gọi ngay: 0833 303 777</a>
+                        </div>
+                    `;
+
+                    document.getElementById('detail-content').innerHTML = html;
+                })
+                .catch(err => {
+                    document.getElementById('detail-content').innerHTML = '<p style="color:red; text-align:center;">Lỗi kết nối máy chủ.</p>';
+                });
+        });
+    </script>
+    <script src="config.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Tin tức - HTX Lam Hồng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #f8f9fa; }
+        .news-detail-container { max-width: 800px; margin: 40px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .news-title { font-size: 2.2rem; color: var(--green-700, #0d5d42); font-weight: 700; margin-bottom: 10px; }
+        .news-date { color: #888; font-size: 0.95rem; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;}
+        .news-thumb { width: 100%; max-height: 450px; object-fit: contain; border-radius: 8px; margin-bottom: 25px; background: #f1f1f1; padding: 10px; }
+        .news-content { font-size: 1.1rem; line-height: 1.8; color: #333; }
+        .back-link { display: inline-flex; align-items: center; margin-bottom: 25px; color: var(--green-700, #0d5d42); text-decoration: none; font-weight: 600; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="index.html" class="brand" aria-label="Lam Hồng home">
+                <img src="static/logo.png" alt="Logo HTX Lam Hồng" class="brand-logo">
+                <span class="brand-copy">HTX VẬN TẢI LAM HỒNG</span>
+            </a>
+
+            <nav class="main-nav" id="mainNav">
+                <a href="index.html#trang-chu">Trang chủ</a>
+                <a href="index.html#gioi-thieu">Giới thiệu</a>
+                <a href="dich-vu.html">Dịch vụ</a>
+                <a href="tin-tuc.html" class="active">Tin tức</a>
+                <a href="index.html#xa-vien">Bảng giá</a>
+                <a href="index.html#lien-he">Liên hệ</a>
+            </nav>
+
+            <a href="tel:0833303777" class="header-btn"><span class="header-btn-icon">📞</span> 0833 303 777</a>
+            <button class="menu-toggle" id="menuToggle" aria-label="Mở menu">☰</button>
+        </div>
+    </header>
+
+    <div class="news-detail-container">
+        <a href="tin-tuc.html" class="back-link">← Quay lại danh sách Tin tức</a>
+        <div id="detail-content">
+            <div style="text-align:center; padding: 50px;">Đang tải nội dung...</div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.getElementById('mainNav').classList.toggle('active');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if(!id) {
+                document.getElementById('detail-content').innerHTML = '<p style="color:red; text-align:center;">Không tìm thấy bài viết.</p>';
+                return;
+            }
+
+            fetch(API_BASE_URL + "/api/public/posts?size=100")
+                .then(res => res.json())
+                .then(data => {
+                    const post = data.content.find(p => p.id == id);
+                    if(!post) {
+                        document.getElementById('detail-content').innerHTML = '<p style="color:red; text-align:center;">Bài viết không tồn tại hoặc đã bị xóa.</p>';
+                        return;
+                    }
+
+                    const dateStr = new Date(post.createdAt).toLocaleDateString('vi-VN');
+                    let html = `
+                        <h1 class="news-title">${post.title}</h1>
+                        <div class="news-date">🕒 Đăng ngày: ${dateStr}</div>
+                        <img src="${post.thumbnailUrl || 'static/logo.png'}" class="news-thumb" alt="${post.title}">
+                        
+                        <div class="news-content">
+                            <p><strong>${post.summary || ''}</strong></p>
+                            <div>${post.content ? post.content.replace(/\\n/g, '<br>') : ''}</div>
+                        </div>
+                    `;
+                    document.getElementById('detail-content').innerHTML = html;
+                })
+                .catch(err => {
+                    document.getElementById('detail-content').innerHTML = '<p style="color:red; text-align:center;">Lỗi kết nối máy chủ.</p>';
+                });
+        });
+    </script>
+    <script src="config.js"></script>
+</body>
+</html>

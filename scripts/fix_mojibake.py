@@ -1,0 +1,15 @@
+import re
+path = r"d:\Study\HTX\src\main\resources\static\admin.html"
+with open(path, "r", encoding="utf-8") as f: content = f.read()
+content = content.replace("S-a", "Sửa")
+content = content.replace("XA3a", "Xóa")
+content = content.replace("LiAn h", "Liên hệ")
+content = content.replace("ThAm D<ch V \nM>i", "Thêm Dịch Vụ Mới")
+content = content.replace("ThAm D<ch V M>i", "Thêm Dịch Vụ Mới")
+content = content.replace("Qun lA D<ch v", "Quản lý Dịch vụ")
+content = content.replace("TAn d<ch v", "Tên dịch vụ")
+content = content.replace("GiA", "Giá")
+content = content.replace("Trng thAi", "Trạng thái")
+content = content.replace("HAnh `Tng", "Hành động")
+content = content.replace("nh", "Ảnh")
+with open(path, "w", encoding="utf-8") as f: f.write(content)

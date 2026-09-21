@@ -1,0 +1,1 @@
+2026-09-22T00:02:19.247+07:00  WARN 41580 --- [htx] [http-nio-8081-exec-4] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.context.request.async.AsyncRequestNotUsableException: ServletOutputStream failed to write: java.io.IOException: Connection reset by peer]
