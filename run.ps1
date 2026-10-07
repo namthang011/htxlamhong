@@ -9,8 +9,8 @@ if (-not $env:JAVA_HOME -or -not (Test-Path (Join-Path $env:JAVA_HOME "bin\java.
     throw "Không tìm thấy JDK. Hãy cài JDK 17 và cấu hình JAVA_HOME."
 }
 
-$javaVersion = & (Join-Path $env:JAVA_HOME "bin\java.exe") -version 2>&1
-if ($javaVersion -notmatch 'version "(17|18|19|2[0-9])') {
+$javaVersion = (& (Join-Path $env:JAVA_HOME "bin\java.exe") -version 2>&1 | Out-String)
+if ($javaVersion -notmatch 'version "(1[7-9]|[2-9][0-9])(?:\.|\")') {
     throw "Dự án yêu cầu Java 17 trở lên. JAVA_HOME hiện tại: $env:JAVA_HOME"
 }
 

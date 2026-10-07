@@ -11,7 +11,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.time.LocalDateTime;
 
 @Component
@@ -89,7 +88,12 @@ public class DataSeeder implements CommandLineRunner {
         s6.setCategory(cat);
         s6.setStatus("ACTIVE");
 
-        serviceRepo.saveAll(Arrays.asList(s1, s2, s3, s4, s5, s6));
+        serviceRepo.save(s1);
+        serviceRepo.save(s2);
+        serviceRepo.save(s3);
+        serviceRepo.save(s4);
+        serviceRepo.save(s5);
+        serviceRepo.save(s6);
 
         // Posts
         Post p1 = new Post();
@@ -116,7 +120,9 @@ public class DataSeeder implements CommandLineRunner {
         p3.setThumbnailUrl("assets/images/camera-nghi-dinh.jpg");
         p3.setCreatedAt(LocalDateTime.now());
 
-        postRepo.saveAll(Arrays.asList(p1, p2, p3));
+        postRepo.save(p1);
+        postRepo.save(p2);
+        postRepo.save(p3);
         
         System.out.println("SEED DATA SUCCESSFULLY IMPORTED FROM OLD WEBSITE!");
     }

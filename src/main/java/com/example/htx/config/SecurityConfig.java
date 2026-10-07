@@ -25,7 +25,7 @@ public class SecurityConfig {
             @Value("${app.cors.allowed-origins}") String allowedOrigins) {
         this.jwtRequestFilter = jwtRequestFilter;
         this.allowedOrigins = java.util.Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
+                .map(origin -> origin.trim())
                 .toArray(String[]::new);
     }
 

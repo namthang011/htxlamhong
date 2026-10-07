@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run HTX (Local)",
+            "request": "launch",
+            "mainClass": "com.example.htx.HtxApplication",
+            "projectName": "htx",
+            "cwd": "${workspaceFolder}",
+            "vmArgs": "-Dspring.profiles.active=local"
+        }
+    ]
+}
