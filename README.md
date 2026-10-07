@@ -14,7 +14,10 @@ tools/                         Maintenance and migration scripts
 docs/                          Project reference documents
 ```
 
-`src/main/resources/static` is the canonical frontend. Build the standalone cPanel package with `python tools/package_cpanel.py`; generated archives are written to `dist/`.
+`src/main/resources/static` is the canonical frontend. Build the standalone
+cPanel package with `python tools/package_cpanel.py`. Upload
+`dist/htxlamhong-public-html.zip` into the domain Document Root and extract it
+there; the archive contains the HTML files and assets directly at its root.
 
 ## Local setup
 
