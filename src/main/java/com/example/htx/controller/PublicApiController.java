@@ -6,6 +6,8 @@ import com.example.htx.entity.Post;
 import com.example.htx.entity.ServiceEntity;
 import com.example.htx.repository.PostRepository;
 import com.example.htx.repository.ServiceEntityRepository;
+import com.example.htx.repository.TestimonialRepository;
+import com.example.htx.repository.GalleryImageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,12 +20,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/public")
-@CrossOrigin(origins = "*")
 @SuppressWarnings("null")
 public class PublicApiController {
     
     @Autowired private ServiceEntityRepository serviceRepository;
     @Autowired private PostRepository postRepository;
+    @Autowired private TestimonialRepository testimonialRepository;
+    @Autowired private GalleryImageRepository galleryImageRepository;
     
     @Autowired private AuthenticationManager authenticationManager;
     @Autowired private JwtUtil jwtTokenUtil;
@@ -34,6 +37,12 @@ public class PublicApiController {
     
     @GetMapping("/posts")
     public Page<Post> getPosts(Pageable pageable) { return postRepository.findAll(pageable); }
+
+    @GetMapping("/testimonials")
+    public Object getTestimonials() { return testimonialRepository.findByActiveTrueOrderBySortOrderAscIdAsc(); }
+
+    @GetMapping("/gallery")
+    public Object getGallery() { return galleryImageRepository.findByActiveTrueOrderBySortOrderAscIdAsc(); }
     
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) throws Exception {

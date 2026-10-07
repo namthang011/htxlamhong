@@ -224,7 +224,7 @@ button {
 
 .hero {
     position: relative;
-    background: url('../static/21646252-6874-4ae8-9cf0-2794b38f722c.jpg') center top / cover no-repeat;
+    background: url('../assets/images/21646252-6874-4ae8-9cf0-2794b38f722c.jpg') center top / cover no-repeat;
     min-height: 520px;
 }
 
@@ -1104,19 +1104,19 @@ button {
 }
 
 .thumb-news-1 {
-    background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.18), rgba(16, 87, 64, 0.06)), url("../static/tintuc1.webp");
+    background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.18), rgba(16, 87, 64, 0.06)), url("../assets/images/tintuc1.webp");
     background-size: cover, cover;
     background-position: center, center;
 }
 
 .thumb-news-2 {
-    background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.18), rgba(16, 87, 64, 0.06)), url("../static/thu tuc bien trang sang bien vang.png");
+    background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.18), rgba(16, 87, 64, 0.06)), url("../assets/images/bien-trang-sang-bien-vang1.webp");
     background-size: cover, cover;
     background-position: center, center;
 }
 
 .thumb-news-3 {
-    background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.18), rgba(16, 87, 64, 0.06)), url("../static/tin tức lắp camera theo nghị định.jpg");
+    background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.18), rgba(16, 87, 64, 0.06)), url("../assets/images/camera-nghi-dinh.jpg");
     background-size: cover, cover;
     background-position: center, center;
 }
@@ -1191,19 +1191,19 @@ button {
 }
 
 .avatar-1 {
-    background-image: linear-gradient(135deg, rgba(13, 93, 66, 0.15), rgba(13, 93, 66, 0.05)), url("../static/xavien1.webp");
+    background-image: linear-gradient(135deg, rgba(13, 93, 66, 0.15), rgba(13, 93, 66, 0.05)), url("../assets/images/xavien1.webp");
     background-size: cover, cover;
     background-position: center, center;
 }
 
 .avatar-2 {
-    background-image: linear-gradient(135deg, rgba(13, 93, 66, 0.15), rgba(13, 93, 66, 0.05)), url("../static/xavien2.jpg");
+    background-image: linear-gradient(135deg, rgba(13, 93, 66, 0.15), rgba(13, 93, 66, 0.05)), url("../assets/images/xavien2.jpg");
     background-size: cover, cover;
     background-position: center, center;
 }
 
 .avatar-3 {
-    background-image: linear-gradient(135deg, rgba(13, 93, 66, 0.15), rgba(13, 93, 66, 0.05)), url("../static/xavien3.jpg");
+    background-image: linear-gradient(135deg, rgba(13, 93, 66, 0.15), rgba(13, 93, 66, 0.05)), url("../assets/images/xavien3.jpg");
     background-size: cover, cover;
     background-position: center, center;
 }
@@ -1235,12 +1235,12 @@ button {
     box-shadow: 0 12px 18px rgba(14,31,27,0.04);
 }
 
-.item-1 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../static/G1.png"); }
-.item-2 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../static/g2.png"); }
-.item-3 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../static/g3.png"); }
-.item-4 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../static/g4.png"); }
-.item-5 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../static/g5.png"); }
-.item-6 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../static/g6.png"); }
+.item-1 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../assets/images/G1.webp"); }
+.item-2 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../assets/images/g2.webp"); }
+.item-3 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../assets/images/g3.webp"); }
+.item-4 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../assets/images/g4.webp"); }
+.item-5 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../assets/images/g5.webp"); }
+.item-6 { background-image: linear-gradient(135deg, rgba(16, 87, 64, 0.12), rgba(16, 87, 64, 0.04)), url("../assets/images/g6.webp"); }
 
 .site-footer {
     background: #f6f7f6;

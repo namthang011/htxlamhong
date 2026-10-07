@@ -34,5 +34,15 @@ build/
 
 ### Custom ###
 logs/
-lamhong_frontend.zip
+*.log
+*.zip
+dist/
+__pycache__/
+*.py[cod]
 *.docx
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+src/main/resources/application-local.properties

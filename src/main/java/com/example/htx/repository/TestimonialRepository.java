@@ -1,0 +1,10 @@
+package com.example.htx.repository;
+
+import com.example.htx.entity.Testimonial;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface TestimonialRepository extends JpaRepository<Testimonial, Long> {
+    List<Testimonial> findByActiveTrueOrderBySortOrderAscIdAsc();
+    List<Testimonial> findAllByOrderBySortOrderAscIdAsc();
+}
