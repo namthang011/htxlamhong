@@ -160,7 +160,7 @@
             <div class="col-12"><label class="form-label" for="srv-name">Tên dịch vụ *</label><input id="srv-name" class="form-control" maxlength="180" required></div>
             <div class="col-12"><label class="form-label" for="srv-slug">Đường dẫn *</label><input id="srv-slug" class="form-control" required></div>
             <div class="col-12"><label class="form-label" for="srv-summary">Mô tả ngắn *</label><textarea id="srv-summary" class="form-control" rows="3" maxlength="250" required></textarea></div>
-            <div class="col-12"><label class="form-label" for="srv-description">Nội dung chi tiết</label><textarea id="srv-description" class="form-control" rows="7" placeholder="Thông tin dịch vụ, thủ tục và lưu ý dành cho khách hàng"></textarea></div>
+            <div class="col-12"><label class="form-label" for="srv-description">Nội dung chi tiết</label><div id="srv-description" class="form-control content-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Nội dung chi tiết dịch vụ"></div></div>
             <div class="col-md-6"><label class="form-label" for="srv-price">Giá (VNĐ)</label><input id="srv-price" type="number" min="0" class="form-control" placeholder="Bỏ trống nếu cần liên hệ"></div>
             <div class="col-md-6"><label class="form-label" for="srv-status">Trạng thái</label><select id="srv-status" class="form-select"><option value="ACTIVE">Đang hoạt động</option><option value="INACTIVE">Tạm ngưng</option></select></div>
             <div class="col-12"><label class="form-label" for="srv-img-file">Ảnh dịch vụ</label><input id="srv-img-file" type="file" class="form-control" accept="image/jpeg,image/png,image/webp"><input type="hidden" id="srv-img"><img id="srv-img-preview" class="form-preview" alt="Ảnh dịch vụ"></div>
@@ -173,7 +173,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="config.js"></script>
-<script src="js/rich-content.js?v=20261106-cpanel"></script>
-<script src="js/admin.js?v=20261106-cpanel"></script>
+<script src="js/rich-content.js?v=20261106-editor"></script>
+<script src="js/admin.js?v=20261106-editor"></script>
 </body>
 </html>

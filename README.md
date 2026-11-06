@@ -47,6 +47,11 @@ The generated build output is written to `target/` and runtime logs to `logs/`; 
 
 ## Public page design and content
 
+The admin news and service editors support inline images with pointer resizing,
+percentage width, left/center/right alignment and alt text. Click an image (or
+focus it and press Enter) to open its controls. Image layout and text alignment
+are preserved through the HTML allowlist when saving and rendering public pages.
+
 Public pages share `css/style.css` and `js/public-content.js`. Edit common navigation,
 contact information and footer in `tools/site/header.html` and `tools/site/footer.html`.
 Edit the home page in `tools/site/home.html`, then regenerate the static HTML:

@@ -9,6 +9,7 @@
     const galleryModal = new bootstrap.Modal($("galleryModal"));
     const appToast = new bootstrap.Toast($("appToast"), { delay: 3200 });
     const postEditor = RichContent.editor($("post-content"), uploadImage, error => notify(error.message, "error"));
+    const serviceEditor = RichContent.editor($("srv-description"), uploadImage, error => notify(error.message, "error"));
     const aboutEditor = RichContent.editor($("about-content"), uploadImage, error => notify(error.message, "error"));
     const draftKey = "htx_admin_post_draft";
 
@@ -216,7 +217,7 @@
         $("srv-name").value = service?.name || "";
         $("srv-slug").value = service?.slug || "";
         $("srv-summary").value = service?.summary || "";
-        $("srv-description").value = service?.description || "";
+        serviceEditor.set(service?.description || "");
         $("srv-price").value = service?.price || "";
         $("srv-status").value = service?.status || "ACTIVE";
         $("srv-img").value = service?.imageUrl || "";
@@ -276,7 +277,7 @@
         setBusy(button, true);
         const id = $("srv-id").value;
         try {
-            await api(`/api/admin/services${id ? "/" + id : ""}`, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: $("srv-name").value.trim(), slug: slugify($("srv-slug").value), summary: $("srv-summary").value.trim(), description: $("srv-description").value, price: $("srv-price").value || null, imageUrl: $("srv-img").value, status: $("srv-status").value }) }, true);
+            await api(`/api/admin/services${id ? "/" + id : ""}`, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: $("srv-name").value.trim(), slug: slugify($("srv-slug").value), summary: $("srv-summary").value.trim(), description: serviceEditor.get(), price: $("srv-price").value || null, imageUrl: $("srv-img").value, status: $("srv-status").value }) }, true);
             serviceModal.hide();
             await loadAll();
             notify(id ? "Đã cập nhật dịch vụ." : "Đã thêm dịch vụ mới.");
