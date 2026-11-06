@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin")
 @SuppressWarnings("null")
 public class AdminApiController {
+    @Autowired private com.example.htx.service.ImageStorageService images;
     
     @Autowired
     private ServiceEntityRepository serviceRepository;
@@ -27,6 +28,8 @@ public class AdminApiController {
     // CRUD for Services
     @PostMapping("/services")
     public ServiceEntity createService(@RequestBody ServiceEntity service) {
+        service.setImageUrl(images.externalize(service.getImageUrl()));
+        service.setDescription(images.externalize(service.getDescription()));
         return serviceRepository.save(service);
     }
     
@@ -37,10 +40,10 @@ public class AdminApiController {
             service.setSlug(serviceDetails.getSlug());
             service.setSummary(serviceDetails.getSummary());
             if (serviceDetails.getDescription() != null) {
-                service.setDescription(serviceDetails.getDescription());
+                service.setDescription(images.externalize(serviceDetails.getDescription()));
             }
             service.setPrice(serviceDetails.getPrice());
-            service.setImageUrl(serviceDetails.getImageUrl());
+            service.setImageUrl(images.externalize(serviceDetails.getImageUrl()));
             service.setStatus(serviceDetails.getStatus());
             if (serviceDetails.getCategory() != null) {
                 service.setCategory(serviceDetails.getCategory());
@@ -61,6 +64,8 @@ public class AdminApiController {
     // CRUD for Posts
     @PostMapping("/posts")
     public Post createPost(@RequestBody Post post) {
+        post.setContent(images.externalize(post.getContent()));
+        post.setThumbnailUrl(images.externalize(post.getThumbnailUrl()));
         return postRepository.save(post);
     }
     
@@ -70,8 +75,8 @@ public class AdminApiController {
             post.setTitle(postDetails.getTitle());
             post.setSlug(postDetails.getSlug());
             post.setSummary(postDetails.getSummary());
-            post.setContent(postDetails.getContent());
-            post.setThumbnailUrl(postDetails.getThumbnailUrl());
+            post.setContent(images.externalize(postDetails.getContent()));
+            post.setThumbnailUrl(images.externalize(postDetails.getThumbnailUrl()));
             return ResponseEntity.ok(postRepository.save(post));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -89,13 +94,13 @@ public class AdminApiController {
     public Object getTestimonials() { return testimonialRepository.findAllByOrderBySortOrderAscIdAsc(); }
 
     @PostMapping("/testimonials")
-    public Testimonial createTestimonial(@RequestBody Testimonial item) { return testimonialRepository.save(item); }
+    public Testimonial createTestimonial(@RequestBody Testimonial item) { item.setImageUrl(images.externalize(item.getImageUrl())); return testimonialRepository.save(item); }
 
     @PutMapping("/testimonials/{id}")
     public ResponseEntity<Testimonial> updateTestimonial(@PathVariable Long id, @RequestBody Testimonial details) {
         return testimonialRepository.findById(id).map(item -> {
             item.setMemberName(details.getMemberName()); item.setMemberTitle(details.getMemberTitle());
-            item.setContent(details.getContent()); item.setImageUrl(details.getImageUrl());
+            item.setContent(details.getContent()); item.setImageUrl(images.externalize(details.getImageUrl()));
             item.setRating(details.getRating()); item.setSortOrder(details.getSortOrder()); item.setActive(details.isActive());
             return ResponseEntity.ok(testimonialRepository.save(item));
         }).orElse(ResponseEntity.notFound().build());
@@ -111,12 +116,12 @@ public class AdminApiController {
     public Object getGallery() { return galleryImageRepository.findAllByOrderBySortOrderAscIdAsc(); }
 
     @PostMapping("/gallery")
-    public GalleryImage createGalleryImage(@RequestBody GalleryImage item) { return galleryImageRepository.save(item); }
+    public GalleryImage createGalleryImage(@RequestBody GalleryImage item) { item.setImageUrl(images.externalize(item.getImageUrl())); return galleryImageRepository.save(item); }
 
     @PutMapping("/gallery/{id}")
     public ResponseEntity<GalleryImage> updateGalleryImage(@PathVariable Long id, @RequestBody GalleryImage details) {
         return galleryImageRepository.findById(id).map(item -> {
-            item.setTitle(details.getTitle()); item.setImageUrl(details.getImageUrl());
+            item.setTitle(details.getTitle()); item.setImageUrl(images.externalize(details.getImageUrl()));
             item.setSortOrder(details.getSortOrder()); item.setActive(details.isActive());
             return ResponseEntity.ok(galleryImageRepository.save(item));
         }).orElse(ResponseEntity.notFound().build());

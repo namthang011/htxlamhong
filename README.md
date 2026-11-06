@@ -33,9 +33,43 @@ For a fresh database, set `ADMIN_INITIAL_PASSWORD` once to create the first admi
 
 ## Verification
 
+Image uploads are stored outside the database. See [image storage](docs/image-storage.md)
+for `UPLOAD_DIR`, persistent hosting/Docker storage, backups and existing-image migration.
+
 ```shell
 ./mvnw clean test
 ./mvnw clean package
 ```
 
 The generated build output is written to `target/` and runtime logs to `logs/`; neither belongs in version control.
+
+## Public page design and content
+
+Public pages share `css/style.css` and `js/public-content.js`. Edit common navigation,
+contact information and footer in `tools/site/header.html` and `tools/site/footer.html`.
+Edit the home page in `tools/site/home.html`, then regenerate the static HTML:
+
+```shell
+python tools/sync_public_pages.py
+python tools/validate_static.py
+```
+
+The About page uses `/api/public/about`; administrators can update it in the About
+section. Existing saved content takes priority over the default introduction.
+The frontend package must be deployed alongside the updated backend, which provides
+`GET /api/public/posts/{id}` and `GET /api/public/services/{id}`.
+
+For existing databases, apply `deploy/migrations/20261106_post_content_longtext.sql`
+before saving posts with inline images. Hibernate schema update may leave the old
+`posts.content` column as `TEXT` (64 KiB); this migration widens it to `LONGTEXT`
+without changing saved content. Fresh databases already use the entity's LONGTEXT mapping.
+
+Browser verification (Playwright and Microsoft Edge required):
+
+```shell
+node tools/verify_public.cjs
+```
+
+Screenshots are saved in `output/site-review/`. The browser check covers public
+pages and admin login at 320, 390, 768 and 1440 pixels, menu operation, images,
+error recovery, pagination and API access protection. It does not edit the database.

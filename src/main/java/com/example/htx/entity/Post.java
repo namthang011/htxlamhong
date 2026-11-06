@@ -12,7 +12,7 @@ public class Post {
     @Column(unique = true, nullable = false)
     private String slug;
     private String summary;
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String content;
     @Column(columnDefinition = "LONGTEXT")
     private String thumbnailUrl;

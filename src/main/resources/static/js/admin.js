@@ -8,6 +8,8 @@
     const testimonialModal = new bootstrap.Modal($("testimonialModal"));
     const galleryModal = new bootstrap.Modal($("galleryModal"));
     const appToast = new bootstrap.Toast($("appToast"), { delay: 3200 });
+    const postEditor = RichContent.editor($("post-content"), uploadImage, error => notify(error.message, "error"));
+    const aboutEditor = RichContent.editor($("about-content"), uploadImage, error => notify(error.message, "error"));
     const draftKey = "htx_admin_post_draft";
 
     function escapeHtml(value = "") {
@@ -68,12 +70,16 @@
         $("connectionStatus").textContent = "Đang đồng bộ…";
         $("connectionStatus").classList.remove("online");
         try {
-            const [posts, services, testimonials, gallery] = await Promise.all([
+            const [posts, services, testimonials, gallery, about] = await Promise.all([
                 api("/api/public/posts?size=100&sort=updatedAt,desc"),
                 api("/api/public/services?size=100&sort=updatedAt,desc"),
                 api("/api/admin/testimonials", {}, true),
-                api("/api/admin/gallery", {}, true)
+                api("/api/admin/gallery", {}, true),
+                api("/api/public/about")
             ]);
+            $("about-title").value = about.title;
+            aboutEditor.set(about.content);
+            $("saveAboutButton").disabled = false;
             state.posts = posts.content || [];
             state.services = services.content || [];
             state.testimonials = testimonials || [];
@@ -102,7 +108,7 @@
         const query = $("postSearch").value.trim().toLowerCase();
         const items = state.posts.filter(post => `${post.title} ${post.summary || ""}`.toLowerCase().includes(query));
         $("postTableBody").innerHTML = items.map(post => `<tr>
-            <td><div class="item-title"><img class="thumb" src="${escapeHtml(post.thumbnailUrl || "assets/images/logo.webp")}" alt=""><div><strong>${escapeHtml(post.title)}</strong><small>${escapeHtml(post.summary || "Chưa có mô tả")}</small></div></div></td>
+            <td><div class="item-title"><img class="thumb" src="${escapeHtml(RichContent.imageUrl(post.thumbnailUrl || "assets/images/logo.webp"))}" alt=""><div><strong>${escapeHtml(post.title)}</strong><small>${escapeHtml(post.summary || "Chưa có mô tả")}</small></div></div></td>
             <td><code>${escapeHtml(post.slug)}</code></td>
             <td>${formatDate(post.updatedAt || post.createdAt)}</td>
             <td><div class="row-actions"><a class="btn btn-sm btn-light" href="/chi-tiet-tin-tuc?id=${post.id}" target="_blank">Xem</a><button class="btn btn-sm btn-outline-primary" data-edit-post="${post.id}">Sửa</button><button class="btn btn-sm btn-outline-danger" data-delete-post="${post.id}">Xóa</button></div></td>
@@ -114,7 +120,7 @@
         const query = $("serviceSearch").value.trim().toLowerCase();
         const items = state.services.filter(service => `${service.name} ${service.summary || ""}`.toLowerCase().includes(query));
         $("serviceTableBody").innerHTML = items.map(service => `<tr>
-            <td><div class="item-title"><img class="thumb" src="${escapeHtml(service.imageUrl || "assets/images/logo.webp")}" alt=""><div><strong>${escapeHtml(service.name)}</strong><small>${escapeHtml(service.summary || "Chưa có mô tả")}</small></div></div></td>
+            <td><div class="item-title"><img class="thumb" src="${escapeHtml(RichContent.imageUrl(service.imageUrl || "assets/images/logo.webp"))}" alt=""><div><strong>${escapeHtml(service.name)}</strong><small>${escapeHtml(service.summary || "Chưa có mô tả")}</small></div></div></td>
             <td>${service.price ? Number(service.price).toLocaleString("vi-VN") + " ₫" : "Liên hệ"}</td>
             <td><span class="badge ${service.status === "ACTIVE" ? "text-bg-success" : "text-bg-secondary"}">${service.status === "ACTIVE" ? "Hoạt động" : "Tạm ngưng"}</span></td>
             <td><div class="row-actions"><button class="btn btn-sm btn-outline-primary" data-edit-service="${service.id}">Sửa</button><button class="btn btn-sm btn-outline-danger" data-delete-service="${service.id}">Xóa</button></div></td>
@@ -124,7 +130,7 @@
 
     function renderTestimonials() {
         $("testimonialTableBody").innerHTML = state.testimonials.map(item => `<tr>
-            <td><div class="item-title"><img class="thumb" src="${escapeHtml(item.imageUrl || "assets/images/logo.webp")}" alt=""><div><strong>${escapeHtml(item.memberName)}</strong><small>${escapeHtml(item.memberTitle || "")}</small></div></div></td>
+            <td><div class="item-title"><img class="thumb" src="${escapeHtml(RichContent.imageUrl(item.imageUrl || "assets/images/logo.webp"))}" alt=""><div><strong>${escapeHtml(item.memberName)}</strong><small>${escapeHtml(item.memberTitle || "")}</small></div></div></td>
             <td><span class="text-warning">${"★".repeat(Math.max(1, Math.min(5, item.rating || 5)))}</span><small class="d-block text-secondary">${escapeHtml(item.content)}</small></td>
             <td>${Number(item.sortOrder || 0)}</td><td><span class="badge ${item.active ? "text-bg-success" : "text-bg-secondary"}">${item.active ? "Hiển thị" : "Đang ẩn"}</span></td>
             <td><div class="row-actions"><button class="btn btn-sm btn-outline-primary" data-edit-testimonial="${item.id}">Sửa</button><button class="btn btn-sm btn-outline-danger" data-delete-testimonial="${item.id}">Xóa</button></div></td></tr>`).join("");
@@ -132,7 +138,7 @@
     }
 
     function renderGallery() {
-        $("galleryAdminGrid").innerHTML = state.gallery.map(item => `<article class="gallery-admin-card"><img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title || "Ảnh hoạt động")}"><div class="gallery-admin-info"><div><strong>${escapeHtml(item.title || "Ảnh hoạt động")}</strong><small>Thứ tự ${Number(item.sortOrder || 0)} · ${item.active ? "Đang hiện" : "Đang ẩn"}</small></div><div class="row-actions"><button class="btn btn-sm btn-outline-primary" data-edit-gallery="${item.id}">Sửa</button><button class="btn btn-sm btn-outline-danger" data-delete-gallery="${item.id}">Xóa</button></div></div></article>`).join("");
+        $("galleryAdminGrid").innerHTML = state.gallery.map(item => `<article class="gallery-admin-card"><img src="${escapeHtml(RichContent.imageUrl(item.imageUrl))}" alt="${escapeHtml(item.title || "Ảnh hoạt động")}"><div class="gallery-admin-info"><div><strong>${escapeHtml(item.title || "Ảnh hoạt động")}</strong><small>Thứ tự ${Number(item.sortOrder || 0)} · ${item.active ? "Đang hiện" : "Đang ẩn"}</small></div><div class="row-actions"><button class="btn btn-sm btn-outline-primary" data-edit-gallery="${item.id}">Sửa</button><button class="btn btn-sm btn-outline-danger" data-delete-gallery="${item.id}">Xóa</button></div></div></article>`).join("");
         $("galleryEmpty").classList.toggle("d-none", state.gallery.length > 0);
     }
 
@@ -140,7 +146,15 @@
         return value ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(new Date(value)) : "—";
     }
 
-    async function imageToDataUrl(file) {
+    let pendingUploads = 0;
+    document.addEventListener("submit", event => {
+        if (pendingUploads) { event.preventDefault(); event.stopImmediatePropagation(); notify("Ảnh đang được tải lên. Vui lòng đợi rồi lưu lại.", "error"); }
+    }, true);
+    async function uploadImage(file) {
+        pendingUploads++;
+        try { return await compressAndUploadImage(file); } finally { pendingUploads--; }
+    }
+    async function compressAndUploadImage(file) {
         if (!file) return "";
         if (file.size > 5 * 1024 * 1024) throw new Error("Ảnh phải nhỏ hơn 5 MB.");
         const bitmap = await createImageBitmap(file);
@@ -150,23 +164,27 @@
         canvas.height = Math.round(bitmap.height * scale);
         canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
         bitmap.close();
-        return canvas.toDataURL("image/webp", .82);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", .82));
+        if (!blob) throw new Error("Không thể xử lý ảnh. Vui lòng chọn lại.");
+        const form = new FormData(); form.append("file", blob, "image.webp");
+        const result = await api("/api/admin/images", { method: "POST", body: form }, true);
+        return RichContent.imageUrl(result.url);
     }
 
     function updatePostPreview() {
         const title = $("post-title").value.trim();
         const summary = $("post-summary").value.trim();
-        const content = $("post-content").value.trim();
+        const content = postEditor.get();
         $("previewTitle").textContent = title || "Tiêu đề bài viết";
-        $("previewSummary").textContent = summary || "Mô tả ngắn sẽ xuất hiện tại đây.";
-        $("previewContent").textContent = content || "Nội dung bài viết sẽ xuất hiện tại đây.";
+        $("previewSummary").textContent = RichContent.plainText(summary) || "Mô tả ngắn sẽ xuất hiện tại đây.";
+        $("previewContent").innerHTML = content || "Nội dung bài viết sẽ xuất hiện tại đây.";
         $("summaryCount").textContent = $("post-summary").value.length;
-        $("contentCount").textContent = $("post-content").value.length;
+        $("contentCount").textContent = $("post-content").textContent.length;
     }
 
     function saveDraft() {
         if ($("post-id").value) return;
-        localStorage.setItem(draftKey, JSON.stringify({ title: $("post-title").value, slug: $("post-slug").value, summary: $("post-summary").value, content: $("post-content").value, image: $("post-img").value, savedAt: Date.now() }));
+        try { localStorage.setItem(draftKey, JSON.stringify({ title: $("post-title").value, slug: $("post-slug").value, summary: $("post-summary").value, content: postEditor.get(), image: $("post-img").value, savedAt: Date.now() })); } catch { $("draftStatus").textContent = "Bản nháp quá lớn để tự lưu. Hãy lưu bài viết trước khi đóng."; return; }
         $("draftStatus").textContent = "Đã tự lưu bản nháp lúc " + new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     }
 
@@ -177,14 +195,14 @@
         $("post-title").value = source.title || "";
         $("post-slug").value = source.slug || "";
         $("post-summary").value = source.summary || "";
-        $("post-content").value = source.content || "";
+        postEditor.set(source.content || "");
         $("post-img").value = source.thumbnailUrl || source.image || "";
         $("postModalTitle").textContent = post ? "Chỉnh sửa bài viết" : "Viết bài mới";
         $("savePostButton").textContent = post ? "Lưu thay đổi" : "Đăng bài";
         $("savePostButton").dataset.label = $("savePostButton").textContent;
         state.slugEdited = Boolean(post || draft?.slug);
         const image = $("post-img").value;
-        $("post-img-preview").src = image;
+        $("post-img-preview").src = RichContent.imageUrl(image);
         $("post-img-preview").style.display = image ? "block" : "none";
         updatePostPreview();
         postModal.show();
@@ -195,12 +213,13 @@
         $("srv-name").value = service?.name || "";
         $("srv-slug").value = service?.slug || "";
         $("srv-summary").value = service?.summary || "";
+        $("srv-description").value = service?.description || "";
         $("srv-price").value = service?.price || "";
         $("srv-status").value = service?.status || "ACTIVE";
         $("srv-img").value = service?.imageUrl || "";
         $("serviceModalTitle").textContent = service ? "Chỉnh sửa dịch vụ" : "Thêm dịch vụ";
         const image = $("srv-img").value;
-        $("srv-img-preview").src = image;
+        $("srv-img-preview").src = RichContent.imageUrl(image);
         $("srv-img-preview").style.display = image ? "block" : "none";
         serviceModal.show();
     }
@@ -215,7 +234,7 @@
         $("testimonial-active").value = String(item?.active ?? true);
         $("testimonial-image").value = item?.imageUrl || "";
         $("testimonialModalTitle").textContent = item ? "Chỉnh sửa đánh giá" : "Thêm đánh giá";
-        $("testimonial-image-preview").src = item?.imageUrl || "";
+        $("testimonial-image-preview").src = RichContent.imageUrl(item?.imageUrl || "");
         $("testimonial-image-preview").style.display = item?.imageUrl ? "block" : "none";
         testimonialModal.show();
     }
@@ -227,18 +246,19 @@
         $("gallery-active").value = String(item?.active ?? true);
         $("gallery-image").value = item?.imageUrl || "";
         $("galleryModalTitle").textContent = item ? "Chỉnh sửa hình ảnh" : "Thêm hình ảnh";
-        $("gallery-image-preview").src = item?.imageUrl || "";
+        $("gallery-image-preview").src = RichContent.imageUrl(item?.imageUrl || "");
         $("gallery-image-preview").style.display = item?.imageUrl ? "block" : "none";
         galleryModal.show();
     }
 
     async function savePost(event) {
         event.preventDefault();
+        if (!postEditor.hasContent()) { notify("Vui lòng nhập nội dung bài viết.", "error"); return; }
         const button = $("savePostButton");
         setBusy(button, true);
         const id = $("post-id").value;
         try {
-            await api(`/api/admin/posts${id ? "/" + id : ""}`, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: $("post-title").value.trim(), slug: slugify($("post-slug").value), summary: $("post-summary").value.trim(), content: $("post-content").value.trim(), thumbnailUrl: $("post-img").value }) }, true);
+            await api(`/api/admin/posts${id ? "/" + id : ""}`, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: $("post-title").value.trim(), slug: slugify($("post-slug").value), summary: $("post-summary").value.trim(), content: postEditor.get(), thumbnailUrl: $("post-img").value }) }, true);
             localStorage.removeItem(draftKey);
             postModal.hide();
             await loadAll();
@@ -253,7 +273,7 @@
         setBusy(button, true);
         const id = $("srv-id").value;
         try {
-            await api(`/api/admin/services${id ? "/" + id : ""}`, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: $("srv-name").value.trim(), slug: slugify($("srv-slug").value), summary: $("srv-summary").value.trim(), price: $("srv-price").value || null, imageUrl: $("srv-img").value, status: $("srv-status").value }) }, true);
+            await api(`/api/admin/services${id ? "/" + id : ""}`, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: $("srv-name").value.trim(), slug: slugify($("srv-slug").value), summary: $("srv-summary").value.trim(), description: $("srv-description").value, price: $("srv-price").value || null, imageUrl: $("srv-img").value, status: $("srv-status").value }) }, true);
             serviceModal.hide();
             await loadAll();
             notify(id ? "Đã cập nhật dịch vụ." : "Đã thêm dịch vụ mới.");
@@ -301,7 +321,7 @@
     $("togglePassword").addEventListener("click", () => { const input = $("password"); input.type = input.type === "password" ? "text" : "password"; $("togglePassword").textContent = input.type === "password" ? "Hiện" : "Ẩn"; });
     $("logoutButton").addEventListener("click", () => { localStorage.removeItem("htx_jwt"); location.reload(); });
     $("menuButton").addEventListener("click", () => document.querySelector(".sidebar").classList.toggle("open"));
-    document.querySelectorAll("[data-tab]").forEach(button => button.addEventListener("click", () => { const titles = { posts: "Quản lý tin tức", services: "Quản lý dịch vụ", testimonials: "Đánh giá xã viên", gallery: "Hình ảnh hoạt động" }; document.querySelectorAll("[data-tab]").forEach(item => item.classList.toggle("active", item === button)); Object.keys(titles).forEach(tab => $("tab-" + tab).classList.toggle("d-none", tab !== button.dataset.tab)); $("pageTitle").textContent = titles[button.dataset.tab]; document.querySelector(".sidebar").classList.remove("open"); }));
+    document.querySelectorAll("[data-tab]").forEach(button => button.addEventListener("click", () => { const titles = { posts: "Quản lý tin tức", about: "Trang giới thiệu", services: "Quản lý dịch vụ", testimonials: "Đánh giá xã viên", gallery: "Hình ảnh hoạt động" }; document.querySelectorAll("[data-tab]").forEach(item => item.classList.toggle("active", item === button)); Object.keys(titles).forEach(tab => $("tab-" + tab).classList.toggle("d-none", tab !== button.dataset.tab)); $("pageTitle").textContent = titles[button.dataset.tab]; document.querySelector(".sidebar").classList.remove("open"); }));
     $("postSearch").addEventListener("input", renderPosts); $("serviceSearch").addEventListener("input", renderServices);
     $("newPostButton").addEventListener("click", () => openPost()); $("newServiceButton").addEventListener("click", () => openService());
     $("newTestimonialButton").addEventListener("click", () => openTestimonial()); $("newGalleryButton").addEventListener("click", () => openGallery());
@@ -313,13 +333,22 @@
     $("post-slug").addEventListener("input", () => { state.slugEdited = true; saveDraft(); });
     $("regenerateSlug").addEventListener("click", () => { $("post-slug").value = slugify($("post-title").value); state.slugEdited = false; saveDraft(); });
     ["post-summary", "post-content"].forEach(id => $(id).addEventListener("input", () => { updatePostPreview(); saveDraft(); }));
-    $("post-img-file").addEventListener("change", async event => { try { const image = await imageToDataUrl(event.target.files[0]); $("post-img").value = image; $("post-img-preview").src = image; $("post-img-preview").style.display = "block"; saveDraft(); } catch (error) { notify(error.message, "error"); } });
+    $("post-img-file").addEventListener("change", async event => { try { const image = await uploadImage(event.target.files[0]); $("post-img").value = image; $("post-img-preview").src = RichContent.imageUrl(image); $("post-img-preview").style.display = "block"; saveDraft(); } catch (error) { notify(error.message, "error"); } });
     $("srv-name").addEventListener("input", () => { if (!$("srv-id").value) $("srv-slug").value = slugify($("srv-name").value); });
-    $("srv-img-file").addEventListener("change", async event => { try { const image = await imageToDataUrl(event.target.files[0]); $("srv-img").value = image; $("srv-img-preview").src = image; $("srv-img-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
-    $("testimonial-image-file").addEventListener("change", async event => { try { const image = await imageToDataUrl(event.target.files[0]); $("testimonial-image").value = image; $("testimonial-image-preview").src = image; $("testimonial-image-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
-    $("gallery-image-file").addEventListener("change", async event => { try { const image = await imageToDataUrl(event.target.files[0]); $("gallery-image").value = image; $("gallery-image-preview").src = image; $("gallery-image-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
+    $("srv-img-file").addEventListener("change", async event => { try { const image = await uploadImage(event.target.files[0]); $("srv-img").value = image; $("srv-img-preview").src = RichContent.imageUrl(image); $("srv-img-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
+    $("testimonial-image-file").addEventListener("change", async event => { try { const image = await uploadImage(event.target.files[0]); $("testimonial-image").value = image; $("testimonial-image-preview").src = RichContent.imageUrl(image); $("testimonial-image-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
+    $("gallery-image-file").addEventListener("change", async event => { try { const image = await uploadImage(event.target.files[0]); $("gallery-image").value = image; $("gallery-image-preview").src = RichContent.imageUrl(image); $("gallery-image-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
     $("clearDraftButton").addEventListener("click", () => { localStorage.removeItem(draftKey); if (!$("post-id").value) openPost(); $("draftStatus").textContent = "Đã xóa bản nháp."; });
     $("postForm").addEventListener("submit", savePost); $("serviceForm").addEventListener("submit", saveService); $("testimonialForm").addEventListener("submit", saveTestimonial); $("galleryForm").addEventListener("submit", saveGallery);
 
+    $("aboutForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        if (!aboutEditor.hasContent()) { notify("Vui lòng nhập nội dung giới thiệu.", "error"); return; }
+        const button = $("saveAboutButton"); setBusy(button, true);
+        try {
+            await api("/api/admin/about", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: $("about-title").value.trim(), content: aboutEditor.get() }) }, true);
+            notify("Đã cập nhật trang Giới thiệu.");
+        } catch (error) { notify(error.message, "error"); } finally { setBusy(button, false); }
+    });
     state.token ? showDashboard() : showLogin();
 })();

@@ -9,7 +9,18 @@ if (-not $env:JAVA_HOME -or -not (Test-Path (Join-Path $env:JAVA_HOME "bin\java.
     throw "Không tìm thấy JDK. Hãy cài JDK 17 và cấu hình JAVA_HOME."
 }
 
-$javaVersion = (& (Join-Path $env:JAVA_HOME "bin\java.exe") -version 2>&1 | Out-String)
+# Java writes its version to stderr; Windows PowerShell treats that as an
+# error when ErrorActionPreference is Stop, even on a successful exit.
+$ErrorActionPreference = "Continue"
+try {
+    $javaVersion = (& (Join-Path $env:JAVA_HOME "bin\java.exe") -version 2>&1 | Out-String)
+    $javaVersionExitCode = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = "Stop"
+}
+if ($javaVersionExitCode -ne 0) {
+    throw "Không thể kiểm tra phiên bản Java."
+}
 if ($javaVersion -notmatch 'version "(1[7-9]|[2-9][0-9])(?:\.|\")') {
     throw "Dự án yêu cầu Java 17 trở lên. JAVA_HOME hiện tại: $env:JAVA_HOME"
 }

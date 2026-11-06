@@ -40,3 +40,22 @@
 }
 @media (max-width: 900px) { .admin-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .admin-gallery { grid-template-columns: 1fr; } }
+.rich-toolbar { display:flex; flex-wrap:wrap; gap:6px; padding:10px 0; }
+.rich-toolbar button { border:1px solid #cbd5d1; border-radius:6px; padding:6px 10px; background:#fff; color:#155c43; cursor:pointer; }
+.content-editor[contenteditable] { min-height:300px; max-height:65vh; overflow:auto; line-height:1.8; white-space:normal; }
+.content-editor img, .preview-content img { max-width:100%; height:auto; display:block; margin:16px 0; }
+
+#aboutForm { padding:28px; max-width:1000px; }
+#aboutForm>label { display:block; margin:18px 0 8px; font-weight:700; }
+.preview-content { white-space:normal; overflow-wrap:anywhere; }
+.content-editor ul,.preview-content ul { list-style:disc; padding-left:1.5em; }
+.content-editor ol,.preview-content ol { list-style:decimal; padding-left:1.5em; }
+.content-editor h2,.preview-content h2 { font-size:1.55rem; margin:1.2em 0 .6em; }
+.content-editor h3,.preview-content h3 { font-size:1.2rem; margin:1.2em 0 .6em; }
+.content-editor p,.preview-content p { margin:0 0 1em; }
+.preview-content img { display:block; width:auto; height:auto; object-fit:contain; }
+.rich-toolbar button { min-height:40px; }
+.rich-toolbar button:hover { background:var(--canvas); }
+.rich-toolbar button:focus-visible { outline:3px solid #b86322; outline-offset:2px; }
+.content-editor:focus { border-color:var(--brand); box-shadow:0 0 0 3px #16734f18; }
+@media(max-width:600px) { #aboutForm { padding:20px; } .topbar h2 { font-size:1.1rem; } }

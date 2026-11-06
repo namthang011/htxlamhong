@@ -3,12 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quản trị nội dung | HTX Lam Hồng</title>
+    <title>Quản trị nội dung | HTX Vận tải Lam Hồng</title>
     <meta name="robots" content="noindex,nofollow">
     <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/admin.css" rel="stylesheet">
-    <link href="css/admin-content.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link href="css/admin.css?v=20261026" rel="stylesheet">
+    <link href="css/admin-content.css?v=20261106" rel="stylesheet">
 </head>
 <body>
 <main id="loginScreen" class="login-page">
@@ -35,6 +37,7 @@
         <a href="/" class="admin-brand"><img src="assets/images/logo.webp" alt=""><span>HTX Lam Hồng<small>Trang quản trị</small></span></a>
         <nav>
             <button class="nav-item active" data-tab="posts"><span>📰</span> Tin tức</button>
+            <button class="nav-item" data-tab="about">Giới thiệu</button>
             <button class="nav-item" data-tab="services"><span>🧰</span> Dịch vụ</button>
             <button class="nav-item" data-tab="testimonials"><span>⭐</span> Đánh giá xã viên</button>
             <button class="nav-item" data-tab="gallery"><span>🖼️</span> Ảnh hoạt động</button>
@@ -69,7 +72,12 @@
                 <div id="postEmpty" class="empty-state d-none">Không tìm thấy bài viết phù hợp.</div>
             </section>
 
-            <section id="tab-services" class="content-card d-none">
+            <section id="tab-about" class="content-card d-none"><form id="aboutForm">
+<h3>Nội dung trang Giới thiệu</h3><label for="about-title">Tiêu đề</label><input id="about-title" class="form-control" maxlength="180" required>
+<label for="about-content">Nội dung</label><div id="about-content" class="form-control content-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Nội dung giới thiệu"></div>
+<button id="saveAboutButton" class="btn btn-brand mt-3" type="submit" disabled>Lưu giới thiệu</button> <a href="gioi-thieu.html" target="_blank">Xem trang giới thiệu</a>
+</form></section>
+<section id="tab-services" class="content-card d-none">
                 <div class="card-toolbar">
                     <div><h3>Dịch vụ</h3><p>Quản lý nội dung đang hiển thị trên website.</p></div>
                     <div class="toolbar-actions">
@@ -131,8 +139,8 @@
                 <div class="label-row"><label class="form-label" for="post-summary">Mô tả ngắn <span>*</span></label><small><b id="summaryCount">0</b>/250</small></div>
                 <textarea id="post-summary" class="form-control" rows="3" maxlength="250" required placeholder="Tóm tắt nội dung giúp người đọc hiểu nhanh…"></textarea>
                 <div class="label-row"><label class="form-label" for="post-content">Nội dung bài viết <span>*</span></label><small><b id="contentCount">0</b> ký tự</small></div>
-                <div class="format-hint">Mỗi đoạn cách nhau bằng một dòng trống. Nội dung sẽ được xem trước bên phải.</div>
-                <textarea id="post-content" class="form-control content-editor" rows="13" required placeholder="Nhập nội dung chi tiết…"></textarea>
+<div class="format-hint">Đặt con trỏ tại nơi muốn chèn ảnh. Có thể chèn nhiều ảnh và xóa trực tiếp trong nội dung.</div>
+<div id="post-content" class="form-control content-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Nội dung bài viết"></div>
                 <label class="form-label" for="post-img-file">Ảnh đại diện</label>
                 <label class="upload-zone" for="post-img-file"><span>🖼️</span><strong>Chọn ảnh đại diện</strong><small>JPG, PNG hoặc WebP · tối đa 5 MB · tự động nén</small></label>
                 <input id="post-img-file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
@@ -152,6 +160,7 @@
             <div class="col-12"><label class="form-label" for="srv-name">Tên dịch vụ *</label><input id="srv-name" class="form-control" maxlength="180" required></div>
             <div class="col-12"><label class="form-label" for="srv-slug">Đường dẫn *</label><input id="srv-slug" class="form-control" required></div>
             <div class="col-12"><label class="form-label" for="srv-summary">Mô tả ngắn *</label><textarea id="srv-summary" class="form-control" rows="3" maxlength="250" required></textarea></div>
+            <div class="col-12"><label class="form-label" for="srv-description">Nội dung chi tiết</label><textarea id="srv-description" class="form-control" rows="7" placeholder="Thông tin dịch vụ, thủ tục và lưu ý dành cho khách hàng"></textarea></div>
             <div class="col-md-6"><label class="form-label" for="srv-price">Giá (VNĐ)</label><input id="srv-price" type="number" min="0" class="form-control" placeholder="Bỏ trống nếu cần liên hệ"></div>
             <div class="col-md-6"><label class="form-label" for="srv-status">Trạng thái</label><select id="srv-status" class="form-select"><option value="ACTIVE">Đang hoạt động</option><option value="INACTIVE">Tạm ngưng</option></select></div>
             <div class="col-12"><label class="form-label" for="srv-img-file">Ảnh dịch vụ</label><input id="srv-img-file" type="file" class="form-control" accept="image/jpeg,image/png,image/webp"><input type="hidden" id="srv-img"><img id="srv-img-preview" class="form-preview" alt="Ảnh dịch vụ"></div>
@@ -164,6 +173,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="config.js"></script>
-<script src="js/admin.js"></script>
+<script src="js/rich-content.js?v=20261106b"></script>
+<script src="js/admin.js?v=20261106b"></script>
 </body>
 </html>

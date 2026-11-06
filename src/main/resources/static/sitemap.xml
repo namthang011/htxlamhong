@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>https://yourdomain.com/</loc>
+        <loc>https://htxlamhong.vn/</loc>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://yourdomain.com/dich-vu</loc>
+        <loc>https://htxlamhong.vn/dich-vu</loc>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://yourdomain.com/tin-tuc</loc>
+        <loc>https://htxlamhong.vn/tin-tuc</loc>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
+    <url><loc>https://htxlamhong.vn/gioi-thieu</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 </urlset>

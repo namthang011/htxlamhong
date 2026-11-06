@@ -49,3 +49,7 @@ __pycache__/
 .env.*
 !.env.example
 src/main/resources/application-local.properties
+
+# Local visual verification artifacts
+output/
+data/uploads/

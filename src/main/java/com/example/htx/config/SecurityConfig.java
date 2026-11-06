@@ -48,10 +48,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/public/**", "/", "/index.html", "/admin", "/admin.html",
-                        "/dich-vu", "/dich-vu.html", "/tin-tuc", "/tin-tuc.html",
+                        "/gioi-thieu", "/gioi-thieu.html", "/dich-vu", "/dich-vu.html", "/tin-tuc", "/tin-tuc.html",
                         "/chi-tiet-dich-vu", "/chi-tiet-dich-vu.html", "/chi-tiet-tin-tuc",
                         "/chi-tiet-tin-tuc.html", "/assets/**", "/css/**", "/js/**", "/config.js",
-                        "/favicon.ico", "/error", "/404.html", "/500.html").permitAll()
+                        "/uploads/**", "/favicon.ico", "/robots.txt", "/sitemap.xml", "/error", "/404.html", "/500.html").permitAll()
                 .anyRequest().authenticated()
             );
             // httpBasic is completely disabled to avoid browser popup

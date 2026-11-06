@@ -38,6 +38,18 @@ public class PublicApiController {
     @GetMapping("/posts")
     public Page<Post> getPosts(Pageable pageable) { return postRepository.findAll(pageable); }
 
+    @GetMapping("/posts/{id}")
+    public ResponseEntity<Post> getPost(@PathVariable Long id) {
+        return postRepository.findById(id).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/services/{id}")
+    public ResponseEntity<ServiceEntity> getService(@PathVariable Long id) {
+        return serviceRepository.findById(id).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/testimonials")
     public Object getTestimonials() { return testimonialRepository.findByActiveTrueOrderBySortOrderAscIdAsc(); }
 

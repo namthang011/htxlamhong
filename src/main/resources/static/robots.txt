@@ -3,4 +3,4 @@ Disallow: /admin.html
 Disallow: /admin
 Disallow: /logs/
 
-Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://htxlamhong.vn/sitemap.xml
