@@ -31,7 +31,10 @@ window.RichContent = (() => {
         flushParagraph(); flushList(); return blocks.join('\n');
     }
     function imageUrl(value = '') {
-        if (/^\/uploads\/[a-f0-9]{64}\.(png|jpg|webp)$/i.test(value)) return (typeof API_BASE_URL === 'string' ? API_BASE_URL.replace(/\/$/, '') : '') + value;
+        if (/^\/uploads\/[a-f0-9]{64}\.(png|jpg|webp)$/i.test(value)) {
+            const base = typeof IMAGE_BASE_URL === 'string' ? IMAGE_BASE_URL : typeof API_BASE_URL === 'string' ? API_BASE_URL : '';
+            return base.replace(/\/$/, '') + value;
+        }
         return /^(https?:\/\/|\/?assets\/|data:image\/(png|jpeg|webp);base64,)/i.test(value) ? value : '';
     }
     function html(value = '') {

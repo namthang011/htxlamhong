@@ -35,6 +35,8 @@ For a fresh database, set `ADMIN_INITIAL_PASSWORD` once to create the first admi
 
 Image uploads are stored outside the database. See [image storage](docs/image-storage.md)
 for `UPLOAD_DIR`, persistent hosting/Docker storage, backups and existing-image migration.
+For Render Free, use the [cPanel image storage setup](docs/cpanel-image-storage.md)
+with `UPLOAD_PROVIDER=cpanel`. The private upload token stays on the two servers.
 
 ```shell
 ./mvnw clean test

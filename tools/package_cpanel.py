@@ -25,6 +25,8 @@ REQUIRED_ROOT_FILES = {
     "config.js",
     "404.html",
     "500.html",
+    "image-upload.php",
+    "uploads/.htaccess",
 }
 
 
@@ -51,6 +53,9 @@ def main() -> None:
         shutil.copytree(WEB_SOURCE, staging)
         shutil.copy2(CPANEL_CONFIG / ".htaccess", staging / ".htaccess")
         shutil.copy2(CPANEL_CONFIG / "config.js", staging / "config.js")
+        shutil.copy2(CPANEL_CONFIG / "image-upload.php", staging / "image-upload.php")
+        (staging / "uploads").mkdir(exist_ok=True)
+        shutil.copy2(CPANEL_CONFIG / "uploads" / ".htaccess", staging / "uploads" / ".htaccess")
         archive_path = Path(shutil.make_archive(str(ARCHIVE_BASE), "zip", staging))
 
     validate_archive(archive_path)

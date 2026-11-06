@@ -1,0 +1,11 @@
+Options -Indexes
+# Only generated raster image filenames can be downloaded from this directory.
+<FilesMatch "^(?![a-f0-9]{64}\.(?:png|jpg|webp)$).*$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "^[a-f0-9]{64}\.(?:png|jpg|webp)$">
+    SetHandler default-handler
+</FilesMatch>
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

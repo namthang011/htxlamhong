@@ -1,5 +1,8 @@
 # Lưu ảnh ngoài cơ sở dữ liệu
 
+**Render Free + cPanel:** dùng [hướng dẫn lưu ảnh trên cPanel](cpanel-image-storage.md).
+Các hướng dẫn thư mục backend bên dưới chỉ dành cho chế độ local hoặc máy chủ có ổ bền vững.
+
 Ảnh mới được nén trong trình duyệt, tải lên `POST /api/admin/images` bằng phiên
 quản trị, rồi lưu thành JPG, PNG hoặc WebP trong thư mục của backend. API trả về
 `/uploads/<sha256>.<đuôi ảnh>`; cơ sở dữ liệu chỉ lưu đường dẫn. Tên tệp gốc không

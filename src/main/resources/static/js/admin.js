@@ -46,6 +46,9 @@
             throw new Error("Phiên đăng nhập hết hạn");
         }
         if (!response.ok) {
+            if (path === "/api/admin/images") {
+                throw new Error(response.status === 413 ? "Ảnh quá lớn. Vui lòng chọn ảnh dưới 5 MB." : response.status >= 500 ? "Không thể lưu ảnh lên hosting. Vui lòng kiểm tra cấu hình lưu ảnh trên cPanel." : "Ảnh không hợp lệ. Vui lòng chọn JPG, PNG hoặc WebP.");
+            }
             const detail = await response.text();
             throw new Error(detail || `Yêu cầu thất bại (${response.status})`);
         }

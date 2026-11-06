@@ -22,7 +22,7 @@ def render(name, title, description, body, active=''):
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css?v=20261106-type2">
-<script src="/config.js" defer></script><script src="/js/rich-content.js?v=20261106b" defer></script><script src="/js/main.js?v=20261026" defer></script><script src="/js/public-content.js?v=20261106" defer></script>
+<script src="/config.js" defer></script><script src="/js/rich-content.js?v=20261106-cpanel" defer></script><script src="/js/main.js?v=20261026" defer></script><script src="/js/public-content.js?v=20261106" defer></script>
 </head>
 <body data-page="{name}"><a href="#main-content" class="skip-link">Chuyển đến nội dung</a>
 {header}

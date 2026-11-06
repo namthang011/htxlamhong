@@ -34,6 +34,6 @@ public class ExistingImageMigration implements ApplicationRunner {
                 }
             }
         }
-        LoggerFactory.getLogger(getClass()).info("Moved images out of {} database fields into {}", changed, images.directory());
+        LoggerFactory.getLogger(getClass()).info("Externalized images in {} database fields using configured image storage", changed);
     }
 }

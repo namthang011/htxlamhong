@@ -53,3 +53,4 @@ src/main/resources/application-local.properties
 # Local visual verification artifacts
 output/
 data/uploads/
+htx-upload-config.php

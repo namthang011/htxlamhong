@@ -18,6 +18,39 @@ class ImageStorageServiceTest {
     private byte[] image() throws Exception { return Files.readAllBytes(Path.of("src/main/resources/static/assets/images/logo.webp")); }
     private ImageStorageService storage() throws Exception { return new ImageStorageService(directory.toString()); }
 
+    @Test void remoteStorageUsesAuthenticatedRequestAndReturnsCpanelUrl() throws Exception {
+        var remote = new ImageStorageService(directory.toString(), "cpanel", "https://site.example/image-upload.php", "a".repeat(64), "https://site.example/uploads");
+        var http = org.mockito.Mockito.mock(java.net.http.HttpClient.class);
+        org.springframework.test.util.ReflectionTestUtils.setField(remote, "http", http);
+        @SuppressWarnings("unchecked")
+        java.net.http.HttpResponse<String> response = org.mockito.Mockito.mock(java.net.http.HttpResponse.class);
+        String filename = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(image())) + ".webp";
+        org.mockito.Mockito.when(response.statusCode()).thenReturn(200);
+        org.mockito.Mockito.when(response.body()).thenReturn(filename);
+        org.mockito.Mockito.when(http.send(org.mockito.ArgumentMatchers.any(java.net.http.HttpRequest.class), org.mockito.ArgumentMatchers.<java.net.http.HttpResponse.BodyHandler<String>>any())).thenAnswer(call -> {
+            java.net.http.HttpRequest request = call.getArgument(0);
+            assertEquals("POST", request.method());
+            assertEquals("a".repeat(64), request.headers().firstValue("X-Upload-Token").orElseThrow());
+            assertEquals(image().length, request.bodyPublisher().orElseThrow().contentLength());
+            return response;
+        });
+        assertEquals("https://site.example/uploads/" + filename, remote.store(image()));
+        try (var files = Files.list(directory)) { assertEquals(0, files.count()); }
+        org.mockito.Mockito.when(response.statusCode()).thenReturn(403);
+        assertEquals(502, assertThrows(ResponseStatusException.class, () -> remote.store(image())).getStatusCode().value());
+        org.mockito.Mockito.when(response.statusCode()).thenReturn(200);
+        org.mockito.Mockito.when(response.body()).thenReturn("<html>hosting error</html>");
+        assertThrows(ResponseStatusException.class, () -> remote.store(image()));
+        org.mockito.Mockito.when(http.send(org.mockito.ArgumentMatchers.any(java.net.http.HttpRequest.class), org.mockito.ArgumentMatchers.<java.net.http.HttpResponse.BodyHandler<String>>any())).thenThrow(new java.io.IOException("offline"));
+        assertThrows(ResponseStatusException.class, () -> remote.store(image()));
+    }
+
+    @Test void remoteConfigurationFailsClosedWithoutHttpsOrSecret() {
+        assertThrows(IllegalArgumentException.class, () -> new ImageStorageService(directory.toString(), "cpanel", "http://site.example/image-upload.php", "a".repeat(64), "https://site.example/uploads"));
+        assertThrows(IllegalArgumentException.class, () -> new ImageStorageService(directory.toString(), "cpanel", "https://site.example/image-upload.php", "", "https://site.example/uploads"));
+        assertThrows(IllegalArgumentException.class, () -> new ImageStorageService(directory.toString(), "unknown", "", "", ""));
+    }
+
     @Test void storesIdenticalImagesOnceAndPreservesBytesAcrossRestarts() throws Exception {
         var storage = storage();
         String url = storage.store(image());
