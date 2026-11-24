@@ -1,0 +1,66 @@
+/** User-facing image actions, including Word-style toolbar and keyboard deletion. */
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+(async()=>{
+ const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})});
+ try{
+  const page=await browser.newPage({viewport:{width:1100,height:1000}});
+  await page.setContent('<main style="max-width:640px;margin:auto"><div id="editor" class="content-editor" contenteditable="true"></div><div class="news-content" id="public"></div></main>');
+  for(const file of ['admin.css','admin-content.css']) await page.addStyleTag({path:path.resolve('src/main/resources/static/css',file)});
+  await page.addScriptTag({path:path.resolve('src/main/resources/static/js/rich-content.js')});
+  const src='data:image/webp;base64,'+fs.readFileSync('src/main/resources/static/assets/images/logo.webp').toString('base64');
+  await page.evaluate(src=>{window.imageSource=src;window.editor=RichContent.editor(document.querySelector('#editor'),async()=>src,error=>{throw error;});},src);
+  async function reset(){await page.evaluate(()=>editor.set('<p>Trước ảnh</p><img src="'+imageSource+'" alt="Ảnh A" data-image-width="40" data-image-align="center"><p>Sau ảnh</p>'));await page.locator('#editor img').evaluate(img=>img.decode());}
+  await reset();
+  const beforeSelection=await page.locator('#editor img').boundingBox();
+  await page.locator('#editor img').click();
+  assert.equal((await page.locator('#editor img').boundingBox()).y,beforeSelection.y,'Selecting an image does not shift the article');
+  await page.getByRole('toolbar').getByRole('button',{name:'Căn phải',exact:true}).click();
+  assert.equal(await page.locator('#editor img').getAttribute('data-image-align'),'right','Main alignment toolbar targets selected image');
+  let positions=await page.locator('#editor img').evaluate(img=>({right:img.getBoundingClientRect().right,parentRight:img.parentElement.getBoundingClientRect().right}));
+  assert(Math.abs(positions.right-positions.parentRight)<2,'Right alignment changes rendered image position');
+  await page.locator('#editor img').click();
+  await page.keyboard.press('Delete');
+  assert.equal(await page.locator('#editor img').count(),0,'Delete removes selected image');
+  assert((await page.locator('#editor').innerText()).includes('Sau ảnh'),'Delete preserves adjacent text');
+  await page.keyboard.press('Control+z');
+  assert.equal(await page.locator('#editor img').count(),1,'Image deletion can be undone');
+  await reset();
+  await page.locator('#editor img').click();
+  await page.getByRole('button',{name:'Xóa ảnh',exact:true}).click();
+  assert.equal(await page.locator('#editor img').count(),0,'Contextual Delete removes image');
+  await page.keyboard.press('Control+z');
+  assert.equal(await page.locator('#editor img').count(),1,'Contextual deletion supports Undo');
+  await page.evaluate(()=>editor.set('<p>Ảnh thứ nhất</p><img src="'+imageSource+'" alt="Một" data-image-width="30"><p>Ảnh thứ hai</p><img src="'+imageSource+'" alt="Hai" data-image-width="30"><p>Giữ nguyên đoạn cuối</p>'));
+  await page.locator('#editor img').nth(1).click();await page.keyboard.press('Backspace');
+  assert.equal(await page.locator('#editor img').count(),1,'Backspace removes only the selected image');
+  assert.equal(await page.locator('#editor img').getAttribute('alt'),'Một');
+  assert((await page.locator('#editor').innerText()).includes('Giữ nguyên đoạn cuối'));
+  await page.evaluate(()=>editor.set('<table><tbody><tr><td><img src="'+imageSource+'" data-image-width="40"></td><td>Ô bên cạnh</td></tr></tbody></table>'));
+  await page.locator('#editor img').click();
+  const cellWidth=await page.locator('.rich-image-settings input[type=number]').inputValue();
+  assert(Math.abs(Number(cellWidth)-40)<=1,'Image size uses its cell width, not the whole editor');
+  await reset();
+  await page.locator('#editor img').click();
+  await page.getByRole('button',{name:'Đưa ảnh xuống',exact:true}).click();
+  let saved=await page.evaluate(()=>editor.get());
+  assert(saved.indexOf('Sau ảnh')<saved.indexOf('<img'),'Move down passes next paragraph');
+  await page.getByRole('button',{name:'Đưa ảnh lên',exact:true}).click();
+  saved=await page.evaluate(()=>editor.get());
+  assert(saved.indexOf('<img')<saved.indexOf('Sau ảnh'),'Move up passes previous paragraph');
+  await page.evaluate(()=>{editor.set('<p>Trước ảnh</p><img src="'+imageSource+'" alt="Ảnh A" data-image-width="40"><p>Đoạn nhận ảnh</p><p>Cuối bài</p>');});
+  await page.locator('#editor img').dragTo(page.locator('#editor p').nth(2));
+  saved=await page.evaluate(()=>editor.get());
+  assert(saved.indexOf('Đoạn nhận ảnh')<saved.indexOf('<img'),'Dragging repositions existing image');
+  assert.equal(await page.locator('#editor img').count(),1,'Dragging never duplicates image');
+  await page.evaluate(saved=>{editor.set(saved);document.querySelector('#public').innerHTML=RichContent.html(editor.get());},saved);
+  assert.equal(await page.locator('#public img').count(),1,'Position survives save and reopen');
+  await page.setViewportSize({width:390,height:900});
+  await reset();await page.locator('#editor img').tap({timeout:1000}).catch(()=>page.locator('#editor img').click());
+  await page.getByRole('button',{name:'Xóa ảnh',exact:true}).click();
+  assert.equal(await page.locator('#editor img').count(),0);
+  console.log('PASS: toolbar image alignment, keyboard/context deletion, Undo, image reordering, drag/drop, save/reopen and mobile');
+ }finally{await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

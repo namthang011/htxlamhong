@@ -21,7 +21,7 @@ const path = require('node:path');
         }, data);
         for (const id of ['news', 'service']) {
             const shell = page.locator('.rich-editor-shell').filter({ has: page.locator('#' + id) });
-            const bar = shell.locator('xpath=preceding-sibling::*[.//input[@type="range"]][1]');
+            const bar = shell.locator('.rich-image-settings');
             await page.locator('#' + id + ' img').click();
             await bar.getByLabel('Rộng (%)', { exact: false }).fill('40');
             await bar.getByRole('button', { name: 'Ảnh phải', exact: true }).click();

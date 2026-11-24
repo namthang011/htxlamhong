@@ -154,13 +154,20 @@ window.RichContent = (() => {
         for (const [label, command, part, shortcut] of [['Đậm','bold',textGroup,'Ctrl+B'],['Nghiêng','italic',textGroup,'Ctrl+I'],['Gạch chân','underline',textGroup,'Ctrl+U'],['Danh sách','insertUnorderedList',listGroup],['Đánh số','insertOrderedList',listGroup],['Căn trái','justifyLeft',alignGroup],['Căn giữa','justifyCenter',alignGroup],['Căn phải','justifyRight',alignGroup],['Căn đều','justifyFull',alignGroup]]) {
             const button = iconButton(document.createElement('button'), label, command, shortcut); button.type = 'button'; button.dataset.command = command; button.setAttribute('aria-pressed', 'false');
             button.addEventListener('mousedown', event => event.preventDefault());
-            button.addEventListener('click', () => { restore(); document.execCommand(command, false); changed(); syncFormatting(); }); part.append(button); formatButtons.push(button);
+            button.addEventListener('click', () => {
+                if (activeImage() && ['justifyLeft','justifyCenter','justifyRight'].includes(command)) { alignImage({justifyLeft:'left',justifyCenter:'center',justifyRight:'right'}[command]); return; }
+                restore(); document.execCommand(command, false); changed(); syncFormatting();
+            }); part.append(button); formatButtons.push(button);
         }
         const insertGroup = group('Chèn nội dung');
         function syncFormatting() {
             const selection = getSelection();
             if (!selection.rangeCount || !element.contains(selection.anchorNode)) return;
-            formatButtons.forEach(button => button.setAttribute('aria-pressed', String(document.queryCommandState(button.dataset.command))));
+            formatButtons.forEach(button => {
+                const command = button.dataset.command;
+                const imageAlignment = activeImage() ? {left:'justifyLeft',center:'justifyCenter',right:'justifyRight'}[selectedImage.dataset.imageAlign || 'center'] : null;
+                button.setAttribute('aria-pressed', String(imageAlignment && command.startsWith('justify') ? command === imageAlignment : document.queryCommandState(command)));
+            });
             const block = document.queryCommandValue('formatBlock').toLowerCase(); blockStyle.value = ['h2','h3'].includes(block) ? block : 'p';
         }
         document.addEventListener('selectionchange', syncFormatting);
@@ -249,7 +256,7 @@ window.RichContent = (() => {
         tableAction('Xóa hàng', (cell, table) => { if (table.rows.length === 1) removeTable(table); else cell.parentElement.remove(); });
         tableAction('Xóa cột', (cell, table) => { const index = cell.cellIndex; if (cell.parentElement.cells.length === 1) removeTable(table); else [...table.rows].forEach(row => row.cells[index]?.remove()); });
         tableAction('Xóa bảng', (cell, table) => removeTable(table));
-        const imageBar = document.createElement('div'); imageBar.className = 'rich-image-controls'; imageBar.hidden = true;
+        const imageBar = document.createElement('div'); imageBar.className = 'rich-image-controls rich-image-settings'; imageBar.hidden = true;
         let selectedVideo;
         const videoBar = document.createElement('div'); videoBar.className = 'rich-image-controls'; videoBar.hidden = true;
         const removeVideo = document.createElement('button'); removeVideo.type = 'button'; removeVideo.textContent = 'Xóa video đã chọn';
@@ -268,11 +275,23 @@ window.RichContent = (() => {
         const handle = document.createElement('button'); handle.type = 'button'; handle.className = 'rich-image-handle'; handle.hidden = true;
         handle.textContent = '↔'; handle.setAttribute('aria-label', 'Kéo để đổi kích thước ảnh; hoặc dùng ô chiều rộng');
         const hint = document.createElement('p'); hint.className = 'rich-editor-hint'; hint.textContent = 'Bấm vào ảnh để chỉnh kích thước, căn lề hoặc kéo nút ↔ ở góc ảnh.';
-        function availableWidth() { const style = getComputedStyle(element); return Math.max(1, element.clientWidth - parseFloat(style.paddingLeft || 0) - parseFloat(style.paddingRight || 0)); }
+        function availableWidth() { const container = activeImage() ? selectedImage.parentElement : element; const style = getComputedStyle(container); return Math.max(1, container.clientWidth - parseFloat(style.paddingLeft || 0) - parseFloat(style.paddingRight || 0)); }
         function activeImage() { return selectedImage && element.contains(selectedImage); }
         function positionHandle() {
             if (!activeImage()) { handle.hidden = true; return; }
             const imageRect = selectedImage.getBoundingClientRect(), rootRect = shell.getBoundingClientRect(), editorRect = element.getBoundingClientRect();
+            const panelWidth = Math.min(600, rootRect.width);
+            imageBar.style.width = panelWidth + 'px';
+            imageBar.style.left = Math.max(0, Math.min(imageRect.left - rootRect.left, rootRect.width - panelWidth)) + 'px';
+            const scrollArea = element.closest('.modal-body');
+            const visibleTop = Math.max(0, scrollArea?.getBoundingClientRect().top || 0);
+            const visibleBottom = Math.min(innerHeight, scrollArea?.getBoundingClientRect().bottom || innerHeight);
+            imageBar.style.maxHeight = Math.max(80, Math.min(260, visibleBottom-visibleTop-24)) + 'px';
+            const panelHeight = imageBar.offsetHeight;
+            let panelTop = imageRect.bottom + 8;
+            if (panelTop + panelHeight > visibleBottom) panelTop = imageRect.top - panelHeight - 8;
+            panelTop = Math.max(visibleTop+8, Math.min(panelTop, visibleBottom-panelHeight-8));
+            imageBar.style.top = (panelTop - rootRect.top) + 'px';
             const rightAligned = selectedImage.dataset.imageAlign === 'right';
             const x = rightAligned ? imageRect.left : imageRect.right;
             handle.hidden = imageRect.bottom > editorRect.bottom || imageRect.bottom < editorRect.top || x < editorRect.left || x > editorRect.right;
@@ -294,17 +313,40 @@ window.RichContent = (() => {
         slider.addEventListener('input', () => resize(Number(slider.value)));
         imageBar.append(widthLabel, sliderLabel);
         const alignButtons = [];
+        function alignImage(alignment) {
+            if (!activeImage()) return;
+            selectedImage.dataset.imageAlign = alignment;
+            selectedImage.style.removeProperty('margin-inline');
+            selectedImage.style.marginLeft = alignment === 'left' ? '0px' : 'auto';
+            selectedImage.style.marginRight = alignment === 'right' ? '0px' : 'auto';
+            alignButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.align === alignment)));
+            formatButtons.filter(button => button.dataset.command.startsWith('justify')).forEach(button => button.setAttribute('aria-pressed', String(button.dataset.command === {left:'justifyLeft',center:'justifyCenter',right:'justifyRight'}[alignment])));
+            positionHandle(); changed();
+        }
         for (const [label, alignment] of [['Ảnh trái','left'],['Ảnh giữa','center'],['Ảnh phải','right']]) {
             const control = document.createElement('button'); control.type = 'button'; control.textContent = label; control.dataset.align = alignment;
-            control.addEventListener('click', () => {
-                if (!activeImage()) return;
-                selectedImage.dataset.imageAlign = alignment;
-                selectedImage.style.marginLeft = alignment === 'left' ? '0px' : 'auto';
-                selectedImage.style.marginRight = alignment === 'right' ? '0px' : 'auto';
-                alignButtons.forEach(button => button.setAttribute('aria-pressed', String(button === control)));
-                positionHandle(); changed();
-            });
+            control.addEventListener('click', () => alignImage(alignment));
             alignButtons.push(control); imageBar.append(control);
+        }
+        imageBar.addEventListener('mousedown', event => { if (event.target.closest('button')) event.preventDefault(); });
+        function moveImage(direction) {
+            if (!activeImage()) return;
+            const image = selectedImage;
+            const root = image.closest('td,th,li') || element;
+            let block = image;
+            while (block.parentElement !== root) block = block.parentElement;
+            const onlyImage = block === image || (!block.textContent.trim() && block.querySelectorAll('img').length === 1 && !block.querySelector('video,table,ul,ol'));
+            const moving = onlyImage ? block : image;
+            if (moving === block) {
+                const sibling = direction < 0 ? block.previousElementSibling : block.nextElementSibling;
+                if (!sibling) return;
+                if (direction < 0) sibling.before(moving); else sibling.after(moving);
+            } else if (direction < 0) block.before(image); else block.after(image);
+            selectImage(image); image.focus({preventScroll:true}); positionHandle(); changed();
+        }
+        for (const [label, direction] of [['Đưa ảnh lên',-1],['Đưa ảnh xuống',1]]) {
+            const move = document.createElement('button'); move.type = 'button'; move.textContent = label;
+            move.addEventListener('click', () => moveImage(direction)); imageBar.append(move);
         }
         const altLabel = document.createElement('label'); altLabel.textContent = 'Mô tả ảnh ';
         const altInput = document.createElement('input'); altInput.type = 'text'; altInput.maxLength = 300; altInput.placeholder = 'Nội dung ảnh'; altLabel.append(altInput); imageBar.append(altLabel);
@@ -320,26 +362,51 @@ window.RichContent = (() => {
             alignButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.align === (image.dataset.imageAlign || 'center'))));
             positionHandle();
         }
-        remove.addEventListener('click', () => { if (activeImage()) { selectedImage.remove(); selectImage(null); changed(); } });
+        function removeImage() {
+            if (!activeImage()) return;
+            const image = selectedImage;
+            element.focus({preventScroll:true});
+            const range = document.createRange(); range.selectNode(image);
+            const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
+            document.execCommand('delete', false);
+            if (element.contains(image)) image.remove();
+            selectImage(null); changed();
+        }
+        remove.addEventListener('click', removeImage);
         function prepareImages() {
             element.querySelectorAll('video').forEach(video => {
                 video.contentEditable = 'false'; video.tabIndex = 0;
                 video.setAttribute('aria-label', 'Video trong bài viết');
             });
             element.querySelectorAll('img').forEach(image => {
-                image.tabIndex = 0; image.setAttribute('role', 'button');
+                image.tabIndex = 0; image.contentEditable = 'false'; image.draggable = false; image.setAttribute('role', 'button');
                 image.setAttribute('aria-label', 'Chỉnh ảnh: ' + (image.alt || 'Ảnh trong nội dung'));
             });
         }
-        element.addEventListener('click', event => selectImage(event.target.tagName === 'IMG' ? event.target : null));
+        element.addEventListener('click', event => {
+            if (suppressImageClick) { suppressImageClick = false; event.preventDefault(); return; }
+            const image = event.target.tagName === 'IMG' ? event.target : null;
+            selectImage(image);
+            if (image) { image.focus({preventScroll:true}); const range = document.createRange(); range.selectNode(image); const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range); remember(); }
+        });
+        element.addEventListener('focusin', event => { if (event.target.tagName === 'IMG') selectImage(event.target); });
         element.addEventListener('click', event => selectVideo(event.target.tagName === 'VIDEO' ? event.target : null));
         element.addEventListener('focusin', event => { if (event.target.tagName === 'VIDEO') selectVideo(event.target); });
         element.addEventListener('input', () => { if (selectedVideo && !element.contains(selectedVideo)) selectVideo(null); });
         element.addEventListener('keydown', event => {
+            if (activeImage() && ['Delete','Backspace'].includes(event.key) && (event.target === selectedImage || event.target === element)) {
+                event.preventDefault(); removeImage(); return;
+            }
             if (event.target.tagName === 'IMG' && ['Enter',' '].includes(event.key)) { event.preventDefault(); selectImage(event.target); widthInput.focus(); }
+            if (event.target.tagName === 'IMG' && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) {
+                event.preventDefault(); const range = document.createRange();
+                if (['ArrowLeft','ArrowUp'].includes(event.key)) range.setStartBefore(event.target); else range.setStartAfter(event.target);
+                range.collapse(true); selectImage(null); element.focus({preventScroll:true}); getSelection().removeAllRanges(); getSelection().addRange(range); remember();
+            }
         });
         element.addEventListener('input', () => { prepareImages(); if (!activeImage()) selectImage(null); else positionHandle(); });
         element.addEventListener('scroll', positionHandle);
+        document.addEventListener('scroll', positionHandle, true);
         element.addEventListener('load', positionHandle, true);
         new ResizeObserver(positionHandle).observe(element);
         shell.addEventListener('keydown', event => { if (event.key === 'Escape') selectImage(null); });
@@ -426,8 +493,47 @@ window.RichContent = (() => {
             document.execCommand('insertHTML', false, html(content));
             changed();
         });
+        let imageDrag = null, suppressImageClick = false;
+        function rangeAtPoint(x, y) {
+            if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
+            const caret = document.caretPositionFromPoint?.(x, y);
+            if (!caret) return null;
+            const range = document.createRange(); range.setStart(caret.offsetNode, caret.offset); range.collapse(true); return range;
+        }
+        function finishImageDrag() {
+            imageDrag = null; shell.classList.remove('is-image-dragging');
+            imageBar.hidden = !activeImage(); positionHandle();
+        }
+        element.addEventListener('pointerdown', event => {
+            if (event.target.tagName !== 'IMG' || event.button !== 0 || event.pointerType === 'touch') return;
+            event.preventDefault(); suppressImageClick = false;
+            imageDrag = { image:event.target, x:event.clientX, y:event.clientY, moved:false };
+            selectImage(event.target); imageBar.hidden = true; handle.hidden = true;
+            event.target.setPointerCapture(event.pointerId);
+        });
+        element.addEventListener('pointermove', event => {
+            if (!imageDrag) return;
+            if (!imageDrag.moved && Math.hypot(event.clientX-imageDrag.x,event.clientY-imageDrag.y) < 6) return;
+            event.preventDefault(); imageDrag.moved = true;
+            imageBar.hidden = true; handle.hidden = true; shell.classList.add('is-image-dragging');
+        });
+        element.addEventListener('pointerup', event => {
+            if (!imageDrag) return;
+            const {image,moved} = imageDrag;
+            if (moved) {
+                event.preventDefault(); suppressImageClick = true;
+                const range = rangeAtPoint(event.clientX,event.clientY);
+                if (range && element.contains(range.startContainer) && !image.contains(range.startContainer)) {
+                    range.collapse(true); range.insertNode(image); selectImage(image); image.focus({preventScroll:true}); changed();
+                }
+            }
+            finishImageDrag();
+        });
+        element.addEventListener('pointercancel', finishImageDrag);
+        element.addEventListener('lostpointercapture', () => { if (imageDrag) finishImageDrag(); });
+        // Reject external drops; repositioning existing images is handled above.
         element.addEventListener('drop', event => event.preventDefault());
-        insertGroup.append(button); toolbar.append(picker); element.before(toolbar, tablePanel, tableTools, hint, imageBar, videoBar, shell); shell.append(element, handle);
+        insertGroup.append(button); toolbar.append(picker); element.before(toolbar, tablePanel, tableTools, hint, videoBar, shell); shell.append(imageBar, element, handle);
         return { set(value) { selectImage(null); selectVideo(null); element.innerHTML = html(value); prepareImages(); savedRange = null; }, get() {
             // Also handle Markdown typed directly into an otherwise plain editor.
             const rich = element.querySelector('h2,h3,strong,b,em,i,ul,ol,img,video,a,blockquote,pre,code,table,[style*="text-align"]');
