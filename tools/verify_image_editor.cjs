@@ -21,7 +21,7 @@ const path = require('node:path');
         }, data);
         for (const id of ['news', 'service']) {
             const shell = page.locator('.rich-editor-shell').filter({ has: page.locator('#' + id) });
-            const bar = shell.locator('xpath=preceding-sibling::*[1]');
+            const bar = shell.locator('xpath=preceding-sibling::*[.//input[@type="range"]][1]');
             await page.locator('#' + id + ' img').click();
             await bar.getByLabel('Rộng (%)', { exact: false }).fill('40');
             await bar.getByRole('button', { name: 'Ảnh phải', exact: true }).click();
@@ -48,7 +48,7 @@ const path = require('node:path');
             assert((await page.locator('#' + id).innerText()).includes('Sau ảnh'), 'Removing image preserves neighboring text');
             await page.evaluate(id => editors[id].set('<p>Chèn ảnh ở đây</p>'), id);
             await page.locator('#' + id).click();
-            const toolbar = shell.locator('xpath=preceding-sibling::*[3]');
+            const toolbar = shell.locator('xpath=preceding-sibling::*[@role="toolbar"][1]');
             await toolbar.locator('input[type=file]').setInputFiles({ name: 'test.webp', mimeType: 'image/webp', buffer: Buffer.from(data.split(',')[1], 'base64') });
             await page.locator('#' + id + ' img').waitFor();
         }
@@ -63,7 +63,7 @@ const path = require('node:path');
         assert((await page.evaluate(() => editors.news.get())).includes('text-align: center'), 'Text alignment survives saving');
         await page.locator('#service img').focus();
         await page.keyboard.press('Enter');
-        assert(await page.locator('.rich-image-controls').nth(1).getByLabel('Rộng (%)', { exact: false }).evaluate(input => input === document.activeElement), 'Keyboard users can select and resize images');
+        assert(await page.locator('.rich-image-controls').filter({ has: page.locator('input[type=range]') }).nth(1).getByLabel('Rộng (%)', { exact: false }).evaluate(input => input === document.activeElement), 'Keyboard users can select and resize images');
         for (const width of [768, 390, 320]) {
             await page.setViewportSize({ width, height: 900 });
             await page.locator('#service img').click();

@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function date(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN'); }
     function card(item, service) {
         const article = node('article', service ? 'service-card' : 'news-card');
-        const href = (service ? '/chi-tiet-dich-vu?id=' : '/chi-tiet-tin-tuc?id=') + encodeURIComponent(item.id);
+        const href = service ? '/chi-tiet-dich-vu?id=' + encodeURIComponent(item.id)
+            : item.slug ? '/tin-tuc/' + encodeURIComponent(item.slug) : '/chi-tiet-tin-tuc?id=' + encodeURIComponent(item.id);
         const title = service ? item.name : item.title;
         const media = link('', href, 'card-media'); media.setAttribute('aria-label', title);
         media.append(image(service ? item.imageUrl : item.thumbnailUrl, title));
@@ -105,9 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = $('detail-content');
         const load = async () => {
             const id = new URLSearchParams(location.search).get('id');
-            if (!about && (!id || !/^\d+$/.test(id))) { status(container, service ? 'Vui lòng chọn một dịch vụ từ danh sách.' : 'Vui lòng chọn một bài viết từ danh sách.'); return; }
+            const slug = !service && !about ? location.pathname.match(/^\/tin-tuc\/([^/]+)\/?$/)?.[1] : null;
+            if (!about && !slug && (!id || !/^\d+$/.test(id))) { status(container, service ? 'Vui lòng chọn một dịch vụ từ danh sách.' : 'Vui lòng chọn một bài viết từ danh sách.'); return; }
             try {
-                const item = await api(about ? 'about' : (service ? 'services/' : 'posts/') + id);
+                const item = await api(about ? 'about' : slug ? 'posts/slug/' + slug : (service ? 'services/' : 'posts/') + id);
+                if (!service && !about && item.slug) {
+                    const path = '/tin-tuc/' + encodeURIComponent(item.slug);
+                    // Static cPanel hosting also upgrades legacy ?id links without a reload.
+                    if (location.pathname !== path || location.search) history.replaceState(null, '', path + location.hash);
+                    let canonical = document.querySelector('link[rel="canonical"]');
+                    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.append(canonical); }
+                    canonical.href = location.origin + path;
+                }
                 if (service && item.status === 'INACTIVE') { status(container, 'Dịch vụ này hiện tạm ngưng. Vui lòng liên hệ để được tư vấn.'); return; }
                 const title = service ? item.name : item.title;
                 document.title = title + ' | HTX Vận tải Lam Hồng';
@@ -119,9 +129,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (src) container.append(image(src, title, 'detail-image'));
                 }
                 const content = node('div', service ? 'service-desc' : 'news-content');
+                if (!service && !about && RichContent.videoUrl(item.videoUrl)) {
+                    const video = node('video', 'detail-video');
+                    video.src = RichContent.videoUrl(item.videoUrl);
+                    video.controls = true; video.preload = 'metadata'; video.playsInline = true;
+                    video.setAttribute('aria-label', title);
+                    video.style.cssText = 'display:block;width:100%;max-height:600px;margin:24px 0;border-radius:12px;background:#111';
+                    container.append(video);
+                }
                 const text = service ? item.description : item.content;
                 content.innerHTML = RichContent.html(text || '');
-                if (!content.textContent.trim() && !content.querySelector('img')) content.append(node('p', '', about ? 'Nội dung giới thiệu đang được hợp tác xã cập nhật. Bạn có thể liên hệ trực tiếp để tìm hiểu thêm.' : 'Liên hệ hợp tác xã để được tư vấn thêm về dịch vụ này.'));
+                if (!content.textContent.trim() && !content.querySelector('img,video')) content.append(node('p', '', about ? 'Nội dung giới thiệu đang được hợp tác xã cập nhật. Bạn có thể liên hệ trực tiếp để tìm hiểu thêm.' : 'Liên hệ hợp tác xã để được tư vấn thêm về dịch vụ này.'));
                 container.append(content, contact());
             } catch (error) { status(container, error.message, error.status === 404 ? null : load); }
         };

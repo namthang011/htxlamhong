@@ -9,6 +9,9 @@ RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /([^.]+)\.html\ HTTP
 RewriteRule ^(.*)\.html$ /$1 [R=301,L]
 
 # Internally map extensionless URLs to .html files
+# Article URLs use the stored slug; the shared page loads the matching API record.
+RewriteRule ^tin-tuc/([^/]+)/?$ chi-tiet-tin-tuc.html [L]
+
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{DOCUMENT_ROOT}/$1.html -f

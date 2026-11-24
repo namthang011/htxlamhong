@@ -1,11 +1,13 @@
 Options -Indexes
-# Only generated raster image filenames can be downloaded from this directory.
-<FilesMatch "^(?![a-f0-9]{64}\.(?:png|jpg|webp)$).*$">
+# Only generated image and video filenames can be downloaded from this directory.
+<FilesMatch "^(?![a-f0-9]{64}\.(?:png|jpg|webp|mp4|webm)$).*$">
     Require all denied
 </FilesMatch>
-<FilesMatch "^[a-f0-9]{64}\.(?:png|jpg|webp)$">
+<FilesMatch "^[a-f0-9]{64}\.(?:png|jpg|webp|mp4|webm)$">
     SetHandler default-handler
 </FilesMatch>
+AddType video/mp4 .mp4
+AddType video/webm .webm
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
 </IfModule>

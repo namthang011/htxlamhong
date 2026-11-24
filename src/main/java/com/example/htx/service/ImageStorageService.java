@@ -51,6 +51,76 @@ public class ImageStorageService {
 
     public Path directory() { return directory; }
 
+    public String validateVideoUrl(String value) {
+        if (value == null || value.isBlank()) return null;
+        String name = "[a-f0-9]{64}\\.(?:mp4|webm)";
+        if (value.matches("/uploads/" + name)) return value;
+        if (provider.equals("cpanel") && value.startsWith(publicBase + "/")
+                && value.substring(publicBase.length() + 1).matches(name)) return value;
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng tải video MP4 hoặc WebM lên trước khi lưu bài.");
+    }
+
+    // Stream videos to disk so concurrent uploads do not hold 100 MB arrays in memory.
+    public String storeVideo(org.springframework.web.multipart.MultipartFile file) throws IOException {
+        long limit = 100L * 1024 * 1024;
+        if (file.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng chọn video.");
+        if (file.getSize() > limit) throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Video không được quá 100 MB.");
+        Path temporary = Files.createTempFile(directory, ".upload-", ".tmp");
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] header;
+            try (var input = file.getInputStream(); var output = Files.newOutputStream(temporary)) {
+                header = input.readNBytes(64);
+                output.write(header); digest.update(header);
+                long total = header.length;
+                byte[] buffer = new byte[65536];
+                int read;
+                while ((read = input.read(buffer)) != -1) {
+                    total += read;
+                    if (total > limit) throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Video không được quá 100 MB.");
+                    output.write(buffer, 0, read); digest.update(buffer, 0, read);
+                }
+            }
+            String extension = videoExtension(header);
+            String name = HexFormat.of().formatHex(digest.digest()) + "." + extension;
+            if (provider.equals("cpanel")) {
+                var request = HttpRequest.newBuilder(endpoint).timeout(Duration.ofMinutes(5))
+                        .header("X-Upload-Token", token).header("X-Upload-Type", "video")
+                        .header("Content-Type", "application/octet-stream")
+                        .POST(HttpRequest.BodyPublishers.ofFile(temporary)).build();
+                try {
+                    var response = http.send(request, HttpResponse.BodyHandlers.ofString());
+                    if (response.statusCode() != 200 || !response.body().trim().equals(name))
+                        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Không thể lưu video lên hosting. Vui lòng kiểm tra cấu hình tải video.");
+                    return publicBase + "/" + name;
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Tải video bị gián đoạn.", e);
+                }
+            }
+            Path destination = directory.resolve(name);
+            if (!Files.exists(destination)) Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING);
+            return "/uploads/" + name;
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        } finally { Files.deleteIfExists(temporary); }
+    }
+
+    private String videoExtension(byte[] header) {
+        String text = new String(header, java.nio.charset.StandardCharsets.ISO_8859_1);
+        if (header.length >= 16 && text.substring(4, 8).equals("ftyp")) {
+            int boxSize = java.nio.ByteBuffer.wrap(header).getInt();
+            if (boxSize >= 16) {
+                for (int offset = 8; offset + 4 <= Math.min(header.length, boxSize); offset += 4) {
+                    if (offset != 12 && java.util.Set.of("isom", "iso2", "mp41", "mp42", "avc1", "M4V ", "dash").contains(text.substring(offset, offset + 4))) return "mp4";
+                }
+            }
+        }
+        if (header.length >= 16 && header[0] == 0x1a && header[1] == 0x45
+                && header[2] == (byte) 0xdf && header[3] == (byte) 0xa3 && text.contains("webm")) return "webm";
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ hỗ trợ video MP4 hoặc WebM.");
+    }
+
     public String store(byte[] bytes) {
         if (bytes.length == 0 || bytes.length > MAX_BYTES) throw badImage();
         String extension;

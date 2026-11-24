@@ -44,6 +44,12 @@ public class PublicApiController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/posts/slug/{slug}")
+    public ResponseEntity<Post> getPostBySlug(@PathVariable String slug) {
+        return postRepository.findBySlug(slug).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/services/{id}")
     public ResponseEntity<ServiceEntity> getService(@PathVariable Long id) {
         return serviceRepository.findById(id).map(ResponseEntity::ok)

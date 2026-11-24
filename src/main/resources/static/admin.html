@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <link href="css/admin.css?v=20261026" rel="stylesheet">
-    <link href="css/admin-content.css?v=20261106" rel="stylesheet">
+    <link href="css/admin-content.css?v=20261124-word-toolbar" rel="stylesheet">
 </head>
 <body>
 <main id="loginScreen" class="login-page">
@@ -127,29 +127,68 @@
     </div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button><button id="saveGalleryButton" class="btn btn-brand" type="submit">Lưu hình ảnh</button></div>
 </form></div></div>
 
-<div class="modal fade" id="postModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable"><form id="postForm" class="modal-content">
-        <div class="modal-header"><div><p class="eyebrow mb-1">Trình soạn thảo</p><h4 id="postModalTitle" class="modal-title">Viết bài mới</h4></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body editor-grid">
-            <div class="editor-fields">
-                <input type="hidden" id="post-id">
-                <label class="form-label" for="post-title">Tiêu đề <span>*</span></label>
-                <input id="post-title" class="form-control form-control-lg" maxlength="180" required placeholder="Nhập tiêu đề hấp dẫn…">
-                <div class="field-row"><div><label class="form-label" for="post-slug">Đường dẫn</label><input id="post-slug" class="form-control" maxlength="190" required></div><button type="button" class="btn btn-light align-self-end" id="regenerateSlug">Tạo lại</button></div>
-                <div class="label-row"><label class="form-label" for="post-summary">Mô tả ngắn <span>*</span></label><small><b id="summaryCount">0</b>/250</small></div>
-                <textarea id="post-summary" class="form-control" rows="3" maxlength="250" required placeholder="Tóm tắt nội dung giúp người đọc hiểu nhanh…"></textarea>
-                <div class="label-row"><label class="form-label" for="post-content">Nội dung bài viết <span>*</span></label><small><b id="contentCount">0</b> ký tự</small></div>
-<div class="format-hint">Đặt con trỏ tại nơi muốn chèn ảnh. Có thể chèn nhiều ảnh và xóa trực tiếp trong nội dung.</div>
-<div id="post-content" class="form-control content-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Nội dung bài viết"></div>
-                <label class="form-label" for="post-img-file">Ảnh đại diện</label>
-                <label class="upload-zone" for="post-img-file"><span>🖼️</span><strong>Chọn ảnh đại diện</strong><small>JPG, PNG hoặc WebP · tối đa 5 MB · tự động nén</small></label>
-                <input id="post-img-file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-                <input type="hidden" id="post-img">
-                <div id="draftStatus" class="draft-status">Bản nháp được lưu tự động trên trình duyệt.</div>
+<div class="modal fade" id="postModal" tabindex="-1" aria-hidden="true" aria-labelledby="postModalTitle">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable"><form id="postForm" class="modal-content post-composer">
+        <div class="modal-header composer-header">
+            <div class="composer-heading"><p class="eyebrow mb-1">TIN TỨC · LAM HỒNG</p><h4 id="postModalTitle" class="modal-title">Viết bài mới</h4></div>
+            <div class="composer-modes" role="group" aria-label="Chế độ viết bài">
+                <button type="button" id="composeModeButton" aria-pressed="true" aria-controls="postComposeView">Soạn thảo</button>
+                <button type="button" id="previewModeButton" aria-pressed="false" aria-controls="postPreviewView">Xem trước</button>
             </div>
-            <aside class="preview-panel"><span class="preview-label">Xem trước bài viết</span><img id="post-img-preview" alt="Ảnh xem trước"><div class="preview-copy"><h2 id="previewTitle">Tiêu đề bài viết</h2><p id="previewSummary" class="lead">Mô tả ngắn sẽ xuất hiện tại đây.</p><div id="previewContent" class="preview-content">Nội dung bài viết sẽ xuất hiện tại đây.</div></div></aside>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng trình soạn thảo"></button>
         </div>
-        <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button><button type="button" class="btn btn-outline-danger me-auto" id="clearDraftButton">Xóa bản nháp</button><button id="savePostButton" type="submit" class="btn btn-brand">Đăng bài</button></div>
+        <div class="modal-body composer-body">
+            <div id="postComposeView" class="composer-layout">
+                <div class="composer-main">
+                    <section class="composer-sheet" aria-label="Nội dung bài viết">
+                        <input type="hidden" id="post-id">
+                        <div class="composer-title-row"><label class="form-label" for="post-title">Tiêu đề bài viết <span>*</span></label><small><span id="titleCount">0</span>/180</small></div>
+                        <textarea id="post-title" class="form-control composer-title" rows="1" maxlength="180" required placeholder="Bắt đầu với một tiêu đề rõ ràng…"></textarea>
+                        <div class="label-row"><label class="form-label" for="post-summary">Mô tả ngắn <span>*</span></label><small><b id="summaryCount">0</b>/250</small></div>
+                        <textarea id="post-summary" class="form-control composer-summary" rows="3" maxlength="250" required placeholder="Tóm tắt điều người đọc sẽ tìm thấy trong bài viết." aria-describedby="summaryHelp"></textarea>
+                        <p id="summaryHelp" class="composer-help">Hiển thị dưới tiêu đề trong danh sách tin tức.</p>
+                        <div class="composer-content-heading"><label id="postContentLabel" class="form-label">Nội dung bài viết <span>*</span></label><small>Văn bản · Ảnh · Video · Bảng</small></div>
+                        <div class="composer-editor-area">
+                            <div id="post-content" class="form-control content-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="postContentLabel" aria-required="true" data-placeholder="Chia sẻ thông tin hữu ích với người đọc…"></div>
+                        </div>
+                        <div class="composer-content-footer"><span><b id="wordCount">0</b> từ</span><span><b id="contentCount">0</b> ký tự</span></div>
+                    </section>
+                    <p class="composer-tip">Đặt con trỏ tại nơi cần chèn ảnh, video hoặc bảng. Có thể dán nội dung từ Word và Excel.</p>
+                </div>
+                <aside class="composer-sidebar" aria-label="Thông tin đăng bài">
+                    <section class="composer-card">
+                        <div class="composer-card-heading"><h5>Ảnh đại diện</h5><span>Không bắt buộc</span></div>
+                        <div class="composer-cover"><img id="coverImagePreview" alt="Ảnh đại diện đã chọn" hidden><div id="coverEmptyState"><span class="cover-plus" aria-hidden="true">+</span><strong>Thêm ảnh cho bài viết</strong><span>Giúp tin tức nổi bật hơn trong danh sách</span></div></div>
+                        <div class="composer-cover-actions"><button type="button" id="chooseCoverButton" class="btn btn-outline-primary">Chọn ảnh</button><button type="button" id="removeCoverButton" class="btn btn-light" hidden>Xóa ảnh</button></div>
+                        <input id="post-img-file" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                        <input type="hidden" id="post-img">
+                        <p class="composer-help">JPG, PNG, WebP · Tối đa 5 MB.<br>Ảnh được tự động nén khi tải lên.</p>
+                        <p id="coverUploadStatus" class="composer-help" role="status" aria-live="polite"></p>
+                    </section>
+                    <section class="composer-card">
+                        <h5><label for="post-slug">Đường dẫn bài viết <span class="required-mark">*</span></label></h5>
+                        <div class="composer-url-prefix">htxlamhong.vn/tin-tuc/</div>
+                        <input id="post-slug" class="form-control" maxlength="190" required aria-describedby="slugHelp">
+                        <div class="composer-slug-action"><p id="slugHelp" class="composer-help">Tự tạo từ tiêu đề. Bạn có thể chỉnh sửa.</p><button type="button" class="btn btn-light" id="regenerateSlug">Tạo lại</button></div>
+                        <a id="postLinkPreview" class="composer-public-link" target="_blank" rel="noopener noreferrer" hidden>Mở bài đã đăng ↗</a>
+                    </section>
+                    <section class="composer-card composer-checklist" aria-label="Kiểm tra trước khi đăng">
+                        <h5>Trước khi đăng</h5>
+                        <ul><li id="checkTitle">Tiêu đề bài viết</li><li id="checkSummary">Mô tả ngắn</li><li id="checkContent">Nội dung bài viết</li></ul>
+                        <p class="composer-help">Bài viết sẽ hiển thị công khai sau khi đăng.</p>
+                    </section>
+                </aside>
+            </div>
+            <div id="postPreviewView" class="composer-preview-view" hidden>
+                <p class="composer-preview-note">Bản xem trước · Nội dung chưa được đăng lên website</p>
+                <article class="preview-panel composer-preview-paper"><span class="preview-label">TIN TỨC & CHIA SẺ</span><div class="preview-copy"><h2 id="previewTitle">Tiêu đề bài viết</h2><p id="previewSummary" class="lead">Mô tả ngắn sẽ xuất hiện tại đây.</p><img id="post-img-preview" alt="Ảnh đại diện bài viết"><div id="previewContent" class="preview-content">Nội dung bài viết sẽ xuất hiện tại đây.</div></div></article>
+            </div>
+        </div>
+        <div class="modal-footer composer-footer">
+            <div class="composer-draft"><span class="draft-indicator" aria-hidden="true"></span><span id="draftStatus" class="draft-status" role="status">Bản nháp được lưu tự động trên trình duyệt.</span></div>
+            <button type="button" class="btn composer-clear" id="clearDraftButton">Xóa bản nháp</button>
+            <div class="composer-footer-actions"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button><button id="savePostButton" type="submit" class="btn btn-brand">Đăng bài</button></div>
+        </div>
     </form></div>
 </div>
 
@@ -173,7 +212,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="config.js"></script>
-<script src="js/rich-content.js?v=20261106-editor"></script>
-<script src="js/admin.js?v=20261106-editor"></script>
+<script src="js/rich-content.js?v=20261124-word-toolbar"></script>
+<script src="js/admin.js?v=20261124-word-toolbar"></script>
 </body>
 </html>

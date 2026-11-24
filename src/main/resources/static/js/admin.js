@@ -8,10 +8,43 @@
     const testimonialModal = new bootstrap.Modal($("testimonialModal"));
     const galleryModal = new bootstrap.Modal($("galleryModal"));
     const appToast = new bootstrap.Toast($("appToast"), { delay: 3200 });
-    const postEditor = RichContent.editor($("post-content"), uploadImage, error => notify(error.message, "error"));
+    const postEditor = RichContent.editor($("post-content"), uploadImage, error => notify(error.message, "error"), uploadVideo);
     const serviceEditor = RichContent.editor($("srv-description"), uploadImage, error => notify(error.message, "error"));
     const aboutEditor = RichContent.editor($("about-content"), uploadImage, error => notify(error.message, "error"));
     const draftKey = "htx_admin_post_draft";
+    let postUpdateTimer;
+    let postSaved = false;
+    function setComposerMode(preview) {
+        $("postModal").querySelectorAll("video").forEach(video => video.pause());
+        if (preview) updatePostPreview();
+        $("postComposeView").hidden = preview;
+        $("postPreviewView").hidden = !preview;
+        $("composeModeButton").setAttribute("aria-pressed", String(!preview));
+        $("previewModeButton").setAttribute("aria-pressed", String(preview));
+        $("postModal").querySelector(".modal-body").scrollTop = 0;
+    }
+    function resizePostTitle() { const title = $("post-title"); title.style.height = "auto"; title.style.height = title.scrollHeight + "px"; }
+    let postTitleWidth = 0;
+    new ResizeObserver(([entry]) => {
+        if (entry.contentRect.width && entry.contentRect.width !== postTitleWidth) {
+            postTitleWidth = entry.contentRect.width; resizePostTitle();
+        }
+    }).observe($("post-title"));
+    function schedulePostUpdate() {
+        clearTimeout(postUpdateTimer);
+        postUpdateTimer = setTimeout(() => { updatePostPreview(); saveDraft(); }, 180);
+    }
+    function updateCover() {
+        const image = RichContent.imageUrl($("post-img").value);
+        $("coverImagePreview").hidden = !image;
+        if (image) $("coverImagePreview").src = image;
+        else $("coverImagePreview").removeAttribute("src");
+        $("coverEmptyState").hidden = Boolean(image);
+        $("removeCoverButton").hidden = !image;
+        if (image) $("post-img-preview").src = image;
+        else $("post-img-preview").removeAttribute("src");
+        $("post-img-preview").style.display = image ? "block" : "none";
+    }
 
     function escapeHtml(value = "") {
         return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
@@ -47,6 +80,9 @@
             throw new Error("Phiên đăng nhập hết hạn");
         }
         if (!response.ok) {
+            if (path === "/api/admin/videos") {
+                throw new Error(response.status === 413 ? "Video quá lớn. Vui lòng chọn video tối đa 100 MB." : response.status >= 500 ? "Không thể lưu video. Vui lòng kiểm tra nơi lưu trữ hoặc thử lại." : "Video không hợp lệ. Vui lòng chọn MP4 hoặc WebM.");
+            }
             if (path === "/api/admin/images") {
                 throw new Error(response.status === 413 ? "Ảnh quá lớn. Vui lòng chọn ảnh dưới 5 MB." : response.status >= 500 ? "Không thể lưu ảnh lên hosting. Vui lòng kiểm tra cấu hình lưu ảnh trên cPanel." : "Ảnh không hợp lệ. Vui lòng chọn JPG, PNG hoặc WebP.");
             }
@@ -115,7 +151,7 @@
             <td><div class="item-title"><img class="thumb" src="${escapeHtml(RichContent.imageUrl(post.thumbnailUrl || "assets/images/logo.webp"))}" alt=""><div><strong>${escapeHtml(post.title)}</strong><small>${escapeHtml(post.summary || "Chưa có mô tả")}</small></div></div></td>
             <td><code>${escapeHtml(post.slug)}</code></td>
             <td>${formatDate(post.updatedAt || post.createdAt)}</td>
-            <td><div class="row-actions"><a class="btn btn-sm btn-light" href="/chi-tiet-tin-tuc?id=${post.id}" target="_blank">Xem</a><button class="btn btn-sm btn-outline-primary" data-edit-post="${post.id}">Sửa</button><button class="btn btn-sm btn-outline-danger" data-delete-post="${post.id}">Xóa</button></div></td>
+            <td><div class="row-actions"><a class="btn btn-sm btn-light" href="${post.slug ? "/tin-tuc/" + encodeURIComponent(post.slug) : "/chi-tiet-tin-tuc?id=" + post.id}" target="_blank">Xem</a><button class="btn btn-sm btn-outline-primary" data-edit-post="${post.id}">Sửa</button><button class="btn btn-sm btn-outline-danger" data-delete-post="${post.id}">Xóa</button></div></td>
         </tr>`).join("");
         $("postEmpty").classList.toggle("d-none", items.length > 0);
     }
@@ -152,7 +188,7 @@
 
     let pendingUploads = 0;
     document.addEventListener("submit", event => {
-        if (pendingUploads) { event.preventDefault(); event.stopImmediatePropagation(); notify("Ảnh đang được tải lên. Vui lòng đợi rồi lưu lại.", "error"); }
+        if (pendingUploads) { event.preventDefault(); event.stopImmediatePropagation(); notify("Tệp đang được tải lên. Vui lòng chờ rồi lưu bài.", "error"); }
     }, true);
     async function uploadImage(file) {
         pendingUploads++;
@@ -175,6 +211,18 @@
         return RichContent.imageUrl(result.url);
     }
 
+    async function uploadVideo(file) {
+        if (!file || !/\.(mp4|webm)$/i.test(file.name) || !file.size || file.size > 100 * 1024 * 1024) {
+            throw new Error("Chọn video MP4 hoặc WebM có dung lượng tối đa 100 MB.");
+        }
+        pendingUploads++;
+        try {
+            const form = new FormData(); form.append("file", file);
+            const result = await api("/api/admin/videos", { method: "POST", body: form }, true);
+            return result.url;
+        } finally { pendingUploads--; }
+    }
+
     function updatePostPreview() {
         const title = $("post-title").value.trim();
         const summary = $("post-summary").value.trim();
@@ -184,6 +232,19 @@
         $("previewContent").innerHTML = content || "Nội dung bài viết sẽ xuất hiện tại đây.";
         $("summaryCount").textContent = $("post-summary").value.length;
         $("contentCount").textContent = $("post-content").textContent.length;
+        $("titleCount").textContent = $("post-title").value.length;
+        const words = $("post-content").innerText.trim().split(/\s+/u).filter(Boolean).length;
+        $("wordCount").textContent = words;
+        for (const [id, complete] of [["checkTitle", title], ["checkSummary", summary], ["checkContent", postEditor.hasContent()]]) {
+            const check = $(id); check.classList.toggle("is-complete", Boolean(complete));
+            check.setAttribute("aria-label", (complete ? "Đã có: " : "Còn thiếu: ") + check.textContent);
+        }
+        const published = Boolean($("post-id").value);
+        $("postLinkPreview").hidden = !published;
+        if (published) {
+            const existing = state.posts.find(post => String(post.id) === $("post-id").value);
+            $("postLinkPreview").href = existing?.slug ? "/tin-tuc/" + encodeURIComponent(existing.slug) : "/chi-tiet-tin-tuc?id=" + $("post-id").value;
+        }
     }
 
     function saveDraft() {
@@ -193,13 +254,23 @@
     }
 
     function openPost(post = null) {
-        const draft = !post ? JSON.parse(localStorage.getItem(draftKey) || "null") : null;
+        clearTimeout(postUpdateTimer);
+        postSaved = false;
+        let draft = null;
+        if (!post) { try { draft = JSON.parse(localStorage.getItem(draftKey) || "null"); } catch { /* Ignore an unreadable local draft. */ } }
         const source = post || draft || {};
         $("post-id").value = post?.id || "";
         $("post-title").value = source.title || "";
         $("post-slug").value = source.slug || "";
         $("post-summary").value = source.summary || "";
-        postEditor.set(source.content || "");
+        const content = document.createElement("div");
+        content.innerHTML = RichContent.html(source.content || "");
+        const legacyUrl = RichContent.videoUrl(source.videoUrl);
+        if (legacyUrl && ![...content.querySelectorAll("video")].some(video => video.getAttribute("src") === legacyUrl)) {
+            const video = document.createElement("video"); video.src = legacyUrl;
+            content.prepend(video);
+        }
+        postEditor.set(content.innerHTML);
         $("post-img").value = source.thumbnailUrl || source.image || "";
         $("postModalTitle").textContent = post ? "Chỉnh sửa bài viết" : "Viết bài mới";
         $("savePostButton").textContent = post ? "Lưu thay đổi" : "Đăng bài";
@@ -208,8 +279,12 @@
         const image = $("post-img").value;
         $("post-img-preview").src = RichContent.imageUrl(image);
         $("post-img-preview").style.display = image ? "block" : "none";
-        updatePostPreview();
+        $("clearDraftButton").hidden = Boolean(post);
+        $("coverUploadStatus").textContent = "";
+        $("draftStatus").textContent = post ? "Chỉnh sửa bài đã đăng · Nhấn Lưu thay đổi để cập nhật." : draft ? "Đã khôi phục bản nháp trên trình duyệt." : "Bản nháp được lưu tự động trên trình duyệt.";
+        updateCover(); updatePostPreview(); setComposerMode(false);
         postModal.show();
+        requestAnimationFrame(resizePostTitle);
     }
 
     function openService(service = null) {
@@ -257,13 +332,15 @@
 
     async function savePost(event) {
         event.preventDefault();
-        if (!postEditor.hasContent()) { notify("Vui lòng nhập nội dung bài viết.", "error"); return; }
+        clearTimeout(postUpdateTimer);
+        if (!postEditor.hasContent()) { setComposerMode(false); $("post-content").focus(); notify("Vui lòng nhập nội dung bài viết.", "error"); return; }
         const button = $("savePostButton");
         setBusy(button, true);
         const id = $("post-id").value;
         try {
-            await api(`/api/admin/posts${id ? "/" + id : ""}`, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: $("post-title").value.trim(), slug: slugify($("post-slug").value), summary: $("post-summary").value.trim(), content: postEditor.get(), thumbnailUrl: $("post-img").value }) }, true);
-            localStorage.removeItem(draftKey);
+            await api(`/api/admin/posts${id ? "/" + id : ""}`, { method: id ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: $("post-title").value.trim(), slug: slugify($("post-slug").value), summary: $("post-summary").value.trim(), content: postEditor.get(), thumbnailUrl: $("post-img").value, videoUrl: null }) }, true);
+            if (!id) localStorage.removeItem(draftKey);
+            postSaved = true;
             postModal.hide();
             await loadAll();
             notify(id ? "Đã cập nhật bài viết." : "Bài viết đã được đăng.");
@@ -333,16 +410,43 @@
     $("serviceTableBody").addEventListener("click", event => { const edit = event.target.closest("[data-edit-service]"); const remove = event.target.closest("[data-delete-service]"); if (edit) openService(state.services.find(item => item.id === Number(edit.dataset.editService))); if (remove) removeItem("services", remove.dataset.deleteService); });
     $("testimonialTableBody").addEventListener("click", event => { const edit = event.target.closest("[data-edit-testimonial]"); const remove = event.target.closest("[data-delete-testimonial]"); if (edit) openTestimonial(state.testimonials.find(item => item.id === Number(edit.dataset.editTestimonial))); if (remove) removeItem("testimonials", remove.dataset.deleteTestimonial); });
     $("galleryAdminGrid").addEventListener("click", event => { const edit = event.target.closest("[data-edit-gallery]"); const remove = event.target.closest("[data-delete-gallery]"); if (edit) openGallery(state.gallery.find(item => item.id === Number(edit.dataset.editGallery))); if (remove) removeItem("gallery", remove.dataset.deleteGallery); });
-    $("post-title").addEventListener("input", () => { if (!state.slugEdited) $("post-slug").value = slugify($("post-title").value); updatePostPreview(); saveDraft(); });
-    $("post-slug").addEventListener("input", () => { state.slugEdited = true; saveDraft(); });
-    $("regenerateSlug").addEventListener("click", () => { $("post-slug").value = slugify($("post-title").value); state.slugEdited = false; saveDraft(); });
-    ["post-summary", "post-content"].forEach(id => $(id).addEventListener("input", () => { updatePostPreview(); saveDraft(); }));
-    $("post-img-file").addEventListener("change", async event => { try { const image = await uploadImage(event.target.files[0]); $("post-img").value = image; $("post-img-preview").src = RichContent.imageUrl(image); $("post-img-preview").style.display = "block"; saveDraft(); } catch (error) { notify(error.message, "error"); } });
+    $("composeModeButton").addEventListener("click", () => setComposerMode(false));
+    $("previewModeButton").addEventListener("click", () => setComposerMode(true));
+    $("postForm").addEventListener("invalid", () => setComposerMode(false), true);
+    $("postModal").addEventListener("keydown", event => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+            event.preventDefault();
+            if ($("post-id").value) $("postForm").requestSubmit();
+            else { clearTimeout(postUpdateTimer); updatePostPreview(); saveDraft(); }
+        }
+    });
+    $("postModal").addEventListener("hide.bs.modal", () => { clearTimeout(postUpdateTimer); if (!postSaved && !$("post-id").value) saveDraft(); });
+    $("post-title").addEventListener("input", () => { resizePostTitle(); if (!state.slugEdited) $("post-slug").value = slugify($("post-title").value); schedulePostUpdate(); });
+    $("post-slug").addEventListener("input", () => { state.slugEdited = true; schedulePostUpdate(); });
+    $("regenerateSlug").addEventListener("click", () => { $("post-slug").value = slugify($("post-title").value); state.slugEdited = false; schedulePostUpdate(); });
+    ["post-summary", "post-content"].forEach(id => $(id).addEventListener("input", schedulePostUpdate));
+    $("chooseCoverButton").addEventListener("click", () => $("post-img-file").click());
+    $("removeCoverButton").addEventListener("click", () => { $("post-img").value = ""; $("post-img-file").value = ""; updateCover(); saveDraft(); });
+    $("post-img-file").addEventListener("change", async event => {
+        const file = event.target.files[0]; if (!file) return;
+        $("chooseCoverButton").disabled = true; $("removeCoverButton").disabled = true;
+        $("coverUploadStatus").textContent = "Đang tải ảnh lên…";
+        try {
+            $("post-img").value = await uploadImage(file); updateCover(); saveDraft();
+            $("coverUploadStatus").textContent = "Đã tải ảnh đại diện.";
+        } catch (error) { $("coverUploadStatus").textContent = "Chưa tải được ảnh. Vui lòng thử lại."; notify(error.message, "error"); }
+        finally { $("chooseCoverButton").disabled = false; $("removeCoverButton").disabled = false; event.target.value = ""; }
+    });
     $("srv-name").addEventListener("input", () => { if (!$("srv-id").value) $("srv-slug").value = slugify($("srv-name").value); });
     $("srv-img-file").addEventListener("change", async event => { try { const image = await uploadImage(event.target.files[0]); $("srv-img").value = image; $("srv-img-preview").src = RichContent.imageUrl(image); $("srv-img-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
     $("testimonial-image-file").addEventListener("change", async event => { try { const image = await uploadImage(event.target.files[0]); $("testimonial-image").value = image; $("testimonial-image-preview").src = RichContent.imageUrl(image); $("testimonial-image-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
     $("gallery-image-file").addEventListener("change", async event => { try { const image = await uploadImage(event.target.files[0]); $("gallery-image").value = image; $("gallery-image-preview").src = RichContent.imageUrl(image); $("gallery-image-preview").style.display = "block"; } catch (error) { notify(error.message, "error"); } });
     $("clearDraftButton").addEventListener("click", () => { localStorage.removeItem(draftKey); if (!$("post-id").value) openPost(); $("draftStatus").textContent = "Đã xóa bản nháp."; });
+    $("postModal").addEventListener("hide.bs.modal", event => {
+        if (pendingUploads) { event.preventDefault(); return; }
+        $("post-content").querySelectorAll("video").forEach(video => video.pause());
+        $("previewContent").querySelectorAll("video").forEach(video => video.pause());
+    });
     $("postForm").addEventListener("submit", savePost); $("serviceForm").addEventListener("submit", saveService); $("testimonialForm").addEventListener("submit", saveTestimonial); $("galleryForm").addEventListener("submit", saveGallery);
 
     $("aboutForm").addEventListener("submit", async event => {

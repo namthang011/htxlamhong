@@ -33,6 +33,22 @@ For a fresh database, set `ADMIN_INITIAL_PASSWORD` once to create the first admi
 
 ## Verification
 
+News posts support MP4 or WebM videos (up to 100 MB each) anywhere in the article.
+Place the cursor in the news editor and select **Chèn video**. Multiple videos can
+be inserted between paragraphs; select a video then use **Xóa video đã chọn** to
+remove it. Uploads must finish before saving. The `posts.content` HTML stores the
+video URLs in their exact positions, and public pages retain native playback controls.
+Existing `posts.video_url` videos still display; opening an old post converts its
+video to the beginning of the editable content, and saving clears the legacy field.
+Files share `UPLOAD_DIR` or configured cPanel storage. No further schema changes
+are needed for inline videos. For databases missing the legacy column, use
+`deploy/migrations/20261115_post_video.sql`.
+
+For cPanel storage, deploy the updated `image-upload.php` and `uploads/.htaccess`
+with the frontend. Reverse proxies must allow requests of at least 101 MB and
+upload timeouts suitable for large videos. Back up videos together with images.
+Removing a video from a post detaches its URL; it does not delete shared files.
+
 Image uploads are stored outside the database. See [image storage](docs/image-storage.md)
 for `UPLOAD_DIR`, persistent hosting/Docker storage, backups and existing-image migration.
 For Render Free, use the [cPanel image storage setup](docs/cpanel-image-storage.md)

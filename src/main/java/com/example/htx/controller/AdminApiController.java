@@ -66,6 +66,7 @@ public class AdminApiController {
     public Post createPost(@RequestBody Post post) {
         post.setContent(images.externalize(post.getContent()));
         post.setThumbnailUrl(images.externalize(post.getThumbnailUrl()));
+        post.setVideoUrl(images.validateVideoUrl(post.getVideoUrl()));
         return postRepository.save(post);
     }
     
@@ -77,6 +78,7 @@ public class AdminApiController {
             post.setSummary(postDetails.getSummary());
             post.setContent(images.externalize(postDetails.getContent()));
             post.setThumbnailUrl(images.externalize(postDetails.getThumbnailUrl()));
+            post.setVideoUrl(images.validateVideoUrl(postDetails.getVideoUrl()));
             return ResponseEntity.ok(postRepository.save(post));
         }).orElse(ResponseEntity.notFound().build());
     }

@@ -16,6 +16,8 @@ public class Post {
     private String content;
     @Column(columnDefinition = "LONGTEXT")
     private String thumbnailUrl;
+    @Column(length = 2048)
+    private String videoUrl;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "author_id")
     private User author;
