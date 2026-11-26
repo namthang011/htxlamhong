@@ -19,6 +19,14 @@ cPanel package with `python tools/package_cpanel.py`. Upload
 `dist/htxlamhong-public-html.zip` into the domain Document Root and extract it
 there; the archive contains the HTML files and assets directly at its root.
 
+cPanel detail routes use `detail-page.php` (PHP 8+) to fetch the public API and
+render the article/service title, description, canonical URL, Open Graph and
+Twitter metadata in the initial HTML for link previews. Deploy `.htaccess` and
+`detail-page.php` together. PHP needs cURL or `allow_url_fopen` and outbound HTTPS
+access to the backend in `config.js`. API failures return 503 (missing records
+return 404), so crawlers do not cache a successful generic preview on failure.
+Previously shared URLs may retain the sharing app's cached preview after deployment.
+
 ## Local setup
 
 1. Install Java 17, Maven 3.9+, and MySQL 8.

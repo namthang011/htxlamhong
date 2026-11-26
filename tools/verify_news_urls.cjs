@@ -51,7 +51,8 @@ const path = require('node:path');
         assert.equal(await page.locator('link[rel=canonical]').count(), 0);
         assert.deepEqual(errors, []);
         const rules = fs.readFileSync('deploy/cpanel/.htaccess', 'utf8');
-        assert(rules.includes('RewriteRule ^tin-tuc/([^/]+)/?$ chi-tiet-tin-tuc.html [L]'));
+        assert(rules.includes('RewriteRule ^tin-tuc/([^/]+)/?$ detail-page.php [END]'));
+        assert(rules.includes('RewriteRule ^chi-tiet-(tin-tuc|dich-vu)(\\.html)?/?$ detail-page.php [END]'));
         console.log('PASS: listing slug links, slug API rendering, legacy ID upgrade, canonical URL, reload and missing article');
     } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -26,6 +26,7 @@ REQUIRED_ROOT_FILES = {
     "404.html",
     "500.html",
     "image-upload.php",
+    "detail-page.php",
     "uploads/.htaccess",
 }
 
@@ -54,6 +55,7 @@ def main() -> None:
         shutil.copy2(CPANEL_CONFIG / ".htaccess", staging / ".htaccess")
         shutil.copy2(CPANEL_CONFIG / "config.js", staging / "config.js")
         shutil.copy2(CPANEL_CONFIG / "image-upload.php", staging / "image-upload.php")
+        shutil.copy2(CPANEL_CONFIG / "detail-page.php", staging / "detail-page.php")
         (staging / "uploads").mkdir(exist_ok=True)
         shutil.copy2(CPANEL_CONFIG / "uploads" / ".htaccess", staging / "uploads" / ".htaccess")
         archive_path = Path(shutil.make_archive(str(ARCHIVE_BASE), "zip", staging))
