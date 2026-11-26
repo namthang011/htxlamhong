@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (service && item.status === 'INACTIVE') { status(container, 'Dịch vụ này hiện tạm ngưng. Vui lòng liên hệ để được tư vấn.'); return; }
                 const title = service ? item.name : item.title;
-                document.title = title + ' | HTX Vận tải Lam Hồng';
+                document.title = about ? title + ' | HTX Vận tải Lam Hồng' : title;
                 container.replaceChildren(node('p', 'eyebrow', about ? 'Về hợp tác xã' : service ? 'Dịch vụ Lam Hồng' : 'Tin tức & chia sẻ'), node('h1', '', title));
                 if (!about) {
                     container.append(node('p', service ? 'card-price' : 'news-meta', service ? price(item.price) : 'Đăng ngày ' + date(item.createdAt)));
